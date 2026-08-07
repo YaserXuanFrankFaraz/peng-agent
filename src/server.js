@@ -26,11 +26,11 @@ import { listToolIcons, resolveResource, resolveToolIcon, resourceManifest } fro
 import { listHelpers, listHelperBehaviorProfiles, listHelperSmokeProfiles, planHelperCommand, runHelperCommand, runHelperBehaviorProfile, smokeHelpers } from "./helpers.js";
 import { describeProvider, listProviderProfiles } from "./provider.js";
 import { fetchProviderModels, planModelFetchRequest } from "./model-fetchers.js";
-import { auditYuuMiraBundle } from "./bundle-audit.js";
+import { auditPengBundle } from "./app-audit.js";
 import { allowSleep, powerState, preventSleep } from "./power.js";
 import { createProtocolEvent } from "./protocol.js";
-import { OBSERVED_YUUMIRA_VERSION } from "./version.js";
-import { importYuuMiraResources } from "./resource-import.js";
+import { VERSION } from "./version.js";
+import { importPengResources } from "./resource-import.js";
 
 const moduleDir = pathModule.dirname(fileURLToPath(import.meta.url));
 const projectRoot = pathModule.dirname(moduleDir);
@@ -477,7 +477,7 @@ async function routeRequest({ request, response, runtime, workspace, events, ter
   }
   if (method === "GET" && path === "/api/resources") return sendJson(response, 200, resourceManifest());
   if (method === "GET" && path === "/api/audit/bundle") {
-    return sendJson(response, 200, auditYuuMiraBundle({
+    return sendJson(response, 200, auditPengBundle({
       appPath: url.searchParams.get("appPath") ?? undefined,
       workspace,
       resourceDir: url.searchParams.get("resourceDir") ?? undefined
@@ -1169,7 +1169,7 @@ function contentType(filePath) {
 }
 
 function staticWebRoot() {
-  if (process.env.YUUMIRA_WEBUI_DIR) return pathModule.resolve(process.env.YUUMIRA_WEBUI_DIR);
+  if (process.env.PENG_WEBUI_DIR) return pathModule.resolve(process.env.PENG_WEBUI_DIR);
   const importedWebui = pathModule.join(projectRoot, "resources", "webui");
   return existsSync(pathModule.join(importedWebui, "index.html")) ? importedWebui : pathModule.join(projectRoot, "webui");
 }
@@ -1363,7 +1363,7 @@ class WorkspaceWatchManager {
   async recordChange({ path, watchedPath, eventType, source }) {
     const absolutePath = resolveInsideWorkspace(this.workspace, path ?? ".");
     const relativePath = this.relativePath(absolutePath);
-    if (relativePath === ".yuumira" || relativePath.startsWith(`.yuumira${pathModule.sep}`)) return null;
+    if (relativePath === ".peng" || relativePath.startsWith(`.peng${pathModule.sep}`)) return null;
     const event = {
       id: crypto.randomUUID(),
       type: "workspace.files.changed",
@@ -2139,7 +2139,7 @@ async function handleCraftRpcRequest({ channel, args, runtime, events, automatio
   if (channel === "releaseNotes:getLatestVersion") return latestReleaseNote()?.id ?? null;
   if (channel === "logo:getUrl") return resourceManifest().logos[0]?.path ?? "/resources/source.png";
   if (channel === "settings:getServerConfig") return mergeConfig();
-  if (channel === "system:versions") return { node: process.version, yuumira: "0.1.0-cleanroom", craftAgents: `${OBSERVED_YUUMIRA_VERSION}-compatible` };
+  if (channel === "system:versions") return { node: process.version, peng: VERSION, craftAgents: "compatible" };
   if (channel === "system:isDebugMode") return process.env.NODE_ENV !== "production";
   if (channel === "system:homeDir" || channel === "server:homeDir") return process.env.HOME ?? null;
 
@@ -2161,7 +2161,7 @@ function craftRpcHandshakeAck({ id, client }) {
     type: "handshake_ack",
     clientId: client.rpcClientId,
     protocolVersion: "1.0",
-    serverVersion: "0.1.0-cleanroom",
+    serverVersion: VERSION,
     reconnected: false,
     stale: false
   };
@@ -2235,7 +2235,7 @@ function normalizeSessionMessageInput(args) {
 function pushVapidPublicKey() {
   const keyBytes = Buffer.concat([
     Buffer.from([0x04]),
-    crypto.createHash("sha512").update("yuumira-clean-room-local-push-vapid").digest()
+    crypto.createHash("sha512").update("peng-clean-room-local-push-vapid").digest()
   ]);
   const publicKey = keyBytes.toString("base64url");
   return {
@@ -2419,8 +2419,8 @@ function rpcPreferences(stored = {}) {
 		    updateDismissed: null,
 		    updateInfo: {
 		      available: false,
-		      currentVersion: OBSERVED_YUUMIRA_VERSION,
-		      latestVersion: OBSERVED_YUUMIRA_VERSION,
+		      currentVersion: VERSION,
+		      latestVersion: VERSION,
 		      status: "current",
 		      downloadProgress: { status: "idle", percent: 0, bytesDownloaded: 0, totalBytes: 0 }
 		    },
@@ -2858,7 +2858,7 @@ async function deleteSkillRpc({ store, workspace, input = {}, skills = [] }) {
   }
   const info = await stat(absolutePath);
   const now = new Date();
-  const archiveRoot = resolveInsideWorkspace(workspace, ".yuumira/deleted-skills");
+  const archiveRoot = resolveInsideWorkspace(workspace, ".peng/deleted-skills");
   await mkdir(archiveRoot, { recursive: true });
   const archiveName = `${now.toISOString().replace(/[:.]/g, "-")}-${safeFileName(pathModule.basename(absolutePath))}`;
   const archivePath = pathModule.join(archiveRoot, archiveName);
@@ -3187,7 +3187,7 @@ async function credentialsHealthRpc(store) {
 
 async function resourcesExportRpc(workspace, input = {}) {
   const manifest = resourceManifest();
-  const target = input.path ?? input.out ?? pathModule.join(".yuumira", "resource-exports", "resource-manifest.json");
+  const target = input.path ?? input.out ?? pathModule.join(".peng", "resource-exports", "resource-manifest.json");
   const targetPath = resolveInsideWorkspace(workspace, target);
   await mkdir(pathModule.dirname(targetPath), { recursive: true });
   await writeFile(targetPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
@@ -3202,12 +3202,14 @@ async function resourcesExportRpc(workspace, input = {}) {
 
 async function resourcesImportRpc(workspace, input = {}) {
   const out = input.out ?? input.path ?? "resources";
+  const source = input.from ?? input.source ?? pathModule.join(projectRoot, "resources");
+  const webuiSource = input.webuiFrom ?? pathModule.join(projectRoot, "resources", "webui");
   const args = [
     "--out", resolveInsideWorkspace(workspace, out),
-    ...(input.from || input.source ? ["--from", input.from ?? input.source] : []),
+    "--from", source,
     ...(input.includeWebui === true ? ["--include-webui"] : []),
     ...(input.webuiOnly === true ? ["--webui-only"] : []),
-    ...(input.webuiFrom ? ["--webui-from", input.webuiFrom] : []),
+    ...(input.includeWebui === true || input.webuiOnly === true ? ["--webui-from", webuiSource] : []),
     ...(input.toolIconsOnly === true ? ["--tool-icons-only"] : []),
     ...(input.themesOnly === true ? ["--themes-only"] : []),
     ...(input.docsOnly === true ? ["--docs-only"] : []),
@@ -3215,7 +3217,7 @@ async function resourcesImportRpc(workspace, input = {}) {
     ...(input.dryRun === true ? ["--dry-run"] : []),
     ...(input.noClean === true ? ["--no-clean"] : [])
   ];
-  const result = await importYuuMiraResources({ args, cwd: workspace });
+  const result = await importPengResources({ args, cwd: workspace });
   return {
     ok: true,
     imported: result.dryRun !== true,
@@ -4361,7 +4363,7 @@ const LARK_KNOWLEDGE_SKILLS = [
   {
     slug: "lark-knowledge-sync",
     name: "Lark Knowledge Sync",
-    description: "Prepare Lark documents and messages for the local YuuMira knowledge cockpit.",
+    description: "Prepare Lark documents and messages for the local Peng knowledge cockpit.",
     body: "Use this skill when Lark content should be organized for local knowledge indexing. Collect document URLs, summarize the requested scope, save imported notes as markdown, and keep source links in the front matter."
   },
   {
@@ -4376,7 +4378,7 @@ const WIKI_KNOWLEDGE_SKILLS = [
   {
     slug: "wiki-knowledge-index",
     name: "Wiki Knowledge Index",
-    description: "Prepare wiki or Obsidian-style markdown folders for YuuMira knowledge indexing.",
+    description: "Prepare wiki or Obsidian-style markdown folders for Peng knowledge indexing.",
     body: "Use this skill when a wiki folder should become a local knowledge vault. Normalize headings, preserve backlinks, keep source paths stable, and flag stale or duplicate pages before indexing."
   },
   {
@@ -5273,8 +5275,8 @@ function desktopUpdateStatus(preferences, channel = "update:getInfo") {
 
 async function checkDesktopUpdate(store, input = {}) {
   const preferences = rpcPreferences(await store.readPreferences());
-  const latest = input.latestVersion ?? input.version ?? latestReleaseNote()?.id ?? preferences.updateInfo.latestVersion ?? OBSERVED_YUUMIRA_VERSION;
-  const current = input.currentVersion ?? preferences.updateInfo.currentVersion ?? OBSERVED_YUUMIRA_VERSION;
+  const latest = input.latestVersion ?? input.version ?? latestReleaseNote()?.id ?? preferences.updateInfo.latestVersion ?? VERSION;
+  const current = input.currentVersion ?? preferences.updateInfo.currentVersion ?? VERSION;
   const available = compareVersionIds(String(latest), String(current)) > 0;
   const updateInfo = {
     ...preferences.updateInfo,
@@ -5317,8 +5319,8 @@ async function downloadDesktopUpdate(store, input = {}) {
 async function installDesktopUpdate(store, input = {}) {
   const preferences = rpcPreferences(await store.readPreferences());
   const now = new Date().toISOString();
-  const targetVersion = input.version ?? preferences.updateInfo.latestVersion ?? preferences.updateInfo.currentVersion ?? OBSERVED_YUUMIRA_VERSION;
-  const installed = compareVersionIds(String(targetVersion), String(preferences.updateInfo.currentVersion ?? OBSERVED_YUUMIRA_VERSION)) >= 0;
+  const targetVersion = input.version ?? preferences.updateInfo.latestVersion ?? preferences.updateInfo.currentVersion ?? VERSION;
+  const installed = compareVersionIds(String(targetVersion), String(preferences.updateInfo.currentVersion ?? VERSION)) >= 0;
   const updateInfo = {
     ...preferences.updateInfo,
     ok: true,
@@ -5485,7 +5487,7 @@ async function fileRpc(workspace, channel, input = {}) {
   }
   if (command === "storeAttachment") {
     const fileName = safeFileName(input.fileName ?? input.name ?? `${crypto.randomUUID()}.bin`);
-    const directory = resolveInsideWorkspace(workspace, input.directory ?? ".yuumira/attachments");
+    const directory = resolveInsideWorkspace(workspace, input.directory ?? ".peng/attachments");
     await mkdir(directory, { recursive: true });
     const filePath = pathModule.join(directory, fileName);
     const body = decodeAttachmentBody(input.dataUrl ?? input.base64 ?? input.content ?? input.bytes ?? "");

@@ -4,7 +4,7 @@ import path from "node:path";
 export const TOOL_ICON_RESOURCE = {
   version: 1,
   tools: [
-    { id: "craft-agent", displayName: "Peng CLI", icon: "craft-agent.svg", commands: ["craft-agent", "peng", "yuumira"] },
+    { id: "craft-agent", displayName: "Peng CLI", icon: "craft-agent.svg", commands: ["craft-agent", "peng"] },
     { id: "git", displayName: "Git", icon: "git.ico", commands: ["git"] },
     { id: "github", displayName: "GitHub", icon: "github.png", commands: ["gh"] },
     { id: "npm", displayName: "npm", icon: "npm.png", commands: ["npm", "npx"] },
@@ -399,7 +399,7 @@ function naturalResourceSort(left, right) {
 }
 
 function resourceRoot() {
-  return process.env.YUUMIRA_RESOURCE_DIR ?? path.join(process.cwd(), "resources");
+  return process.env.PENG_RESOURCE_DIR ?? path.join(process.cwd(), "resources");
 }
 
 function renderIconPlaceholder(tool) {

@@ -3,11 +3,11 @@ import { chmod, mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { auditYuuMiraBundle, inspectWebuiRpcCoverage } from "../src/bundle-audit.js";
+import { auditPengBundle, inspectWebuiRpcCoverage } from "../src/app-audit.js";
 
 test("audits installed bundle shape against clone resources", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-bundle-audit-"));
-  const appPath = path.join(workspace, "YuuMira.app");
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-bundle-audit-"));
+  const appPath = path.join(workspace, "Peng.app");
   const appResources = path.join(appPath, "Contents", "Resources");
   const appServer = path.join(appResources, "server");
   const appShared = path.join(appResources, "resources");
@@ -26,10 +26,10 @@ test("audits installed bundle shape against clone resources", async () => {
   await mkdir(path.join(appShared, "craft-logos"), { recursive: true });
   await writeFile(path.join(appPath, "Contents", "Info.plist"), `<?xml version="1.0"?>
 <plist><dict>
-<key>CFBundleIdentifier</key><string>app.yuuone.yuumira</string>
-<key>CFBundleExecutable</key><string>craft-agents-tauri</string>
+<key>CFBundleIdentifier</key><string>com.yaserxuanfrankfaraz.peng</string>
+<key>CFBundleExecutable</key><string>Peng</string>
 <key>CFBundleShortVersionString</key><string>0.11.11</string>
-<key>CFBundleURLSchemes</key><array><string>yuumira</string><string>craftagents</string></array>
+<key>CFBundleURLSchemes</key><array><string>peng</string><string>craftagents</string></array>
 </dict></plist>
 `, "utf8");
   await writeFile(path.join(appServer, "bin", "craft-server"), "server\n", "utf8");
@@ -59,7 +59,7 @@ test("audits installed bundle shape against clone resources", async () => {
       exports: { ".": "./dist/index.js" }
     }), "utf8");
   }
-  await writeFile(path.join(appServer, "resources", "webui", "index.html"), "<title>YuuMira</title>", "utf8");
+  await writeFile(path.join(appServer, "resources", "webui", "index.html"), "<title>Peng</title>", "utf8");
   await writeFile(path.join(appServer, "resources", "webui", "assets", "main.js"), "console.log('app')", "utf8");
   await writeFile(path.join(appShared, "tool-icons", "terminal.svg"), "<svg />", "utf8");
   await writeFile(path.join(appShared, "themes", "default.json"), "{}", "utf8");
@@ -80,8 +80,8 @@ test("audits installed bundle shape against clone resources", async () => {
   await mkdir(path.join(cloneResources, "release-notes"), { recursive: true });
   await mkdir(path.join(cloneResources, "craft-logos"), { recursive: true });
   await mkdir(path.join(workspace, "src"), { recursive: true });
-  await writeFile(path.join(workspace, "package.json"), JSON.stringify({ name: "yuumira-cleanroom" }), "utf8");
-  await writeFile(path.join(cloneResources, "webui", "index.html"), "<title>YuuMira</title>", "utf8");
+  await writeFile(path.join(workspace, "package.json"), JSON.stringify({ name: "peng-cleanroom" }), "utf8");
+  await writeFile(path.join(cloneResources, "webui", "index.html"), "<title>Peng</title>", "utf8");
   await writeFile(path.join(appServer, "resources", "webui", "assets", "main.js"), "globalThis.rpc('sessions:get')", "utf8");
   await writeFile(path.join(cloneResources, "webui", "assets", "main.js"), "globalThis.rpc('sessions:get')", "utf8");
   await writeFile(path.join(workspace, "src", "server.js"), "export function handle(channel) { return channel === \"sessions:get\"; }\n", "utf8");
@@ -102,10 +102,10 @@ test("audits installed bundle shape against clone resources", async () => {
   await writeFile(path.join(cloneResources, "config-defaults.json"), "{}", "utf8");
   await writeFile(path.join(cloneResources, "source.png"), "source", "utf8");
 
-  const result = auditYuuMiraBundle({ appPath, workspace, resourceDir: cloneResources });
+  const result = auditPengBundle({ appPath, workspace, resourceDir: cloneResources });
 
-  assert.equal(result.app.bundleIdentifier, "app.yuuone.yuumira");
-  assert.equal(result.app.executable, "craft-agents-tauri");
+  assert.equal(result.app.bundleIdentifier, "com.yaserxuanfrankfaraz.peng");
+  assert.equal(result.app.executable, "Peng");
   assert.equal(result.app.packages.names.includes("@craft-agent/shared"), true);
   assert.equal(result.app.packages.manifests.length, 8);
   assert.equal(result.comparisons.checks.find((item) => item.id === "server.packages").ok, true);
@@ -117,7 +117,7 @@ test("audits installed bundle shape against clone resources", async () => {
 });
 
 test("tracks missing webui RPC channel coverage against server source", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-webui-rpc-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-webui-rpc-"));
   const cloneResources = path.join(workspace, "resources");
   await mkdir(path.join(cloneResources, "webui", "assets"), { recursive: true });
   await mkdir(path.join(workspace, "src"), { recursive: true });
@@ -143,8 +143,8 @@ test("tracks missing webui RPC channel coverage against server source", async ()
 	});
 
 test("tracks installed package export coverage against clone modules", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-export-coverage-"));
-  const appPath = path.join(workspace, "YuuMira.app");
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-export-coverage-"));
+  const appPath = path.join(workspace, "Peng.app");
   const appServer = path.join(appPath, "Contents", "Resources", "server");
   const cloneResources = path.join(workspace, "resources");
   await mkdir(path.join(appPath, "Contents"), { recursive: true });
@@ -157,10 +157,10 @@ test("tracks installed package export coverage against clone modules", async () 
   await mkdir(path.join(workspace, "src"), { recursive: true });
   await writeFile(path.join(appPath, "Contents", "Info.plist"), `<?xml version="1.0"?>
 <plist><dict>
-<key>CFBundleIdentifier</key><string>app.yuuone.yuumira</string>
-<key>CFBundleExecutable</key><string>craft-agents-tauri</string>
+<key>CFBundleIdentifier</key><string>com.yaserxuanfrankfaraz.peng</string>
+<key>CFBundleExecutable</key><string>Peng</string>
 <key>CFBundleShortVersionString</key><string>0.11.11</string>
-<key>CFBundleURLSchemes</key><array><string>yuumira</string><string>craftagents</string></array>
+<key>CFBundleURLSchemes</key><array><string>peng</string><string>craftagents</string></array>
 </dict></plist>
 `, "utf8");
   await writeFile(path.join(appServer, "bin", "craft-server"), "server\n", "utf8");
@@ -185,12 +185,12 @@ test("tracks installed package export coverage against clone modules", async () 
       "./transport": "./dist/transport.js"
     }
   }), "utf8");
-  await writeFile(path.join(workspace, "package.json"), JSON.stringify({ name: "yuumira-cleanroom" }), "utf8");
+  await writeFile(path.join(workspace, "package.json"), JSON.stringify({ name: "peng-cleanroom" }), "utf8");
   await writeFile(path.join(workspace, "src", "memory.js"), "export {}\n", "utf8");
   await writeFile(path.join(workspace, "src", "terminal.js"), "export {}\n", "utf8");
   await writeFile(path.join(workspace, "src", "server.js"), "export {}\n", "utf8");
 
-  const result = auditYuuMiraBundle({ appPath, workspace, resourceDir: cloneResources });
+  const result = auditPengBundle({ appPath, workspace, resourceDir: cloneResources });
   const shared = result.clone.exportCoverage.packages.find((pkg) => pkg.name === "@craft-agent/shared");
   const serverCore = result.clone.exportCoverage.packages.find((pkg) => pkg.name === "@craft-agent/server-core");
 
@@ -203,8 +203,8 @@ test("tracks installed package export coverage against clone modules", async () 
 });
 
 test("flags same-count resource content drift", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-bundle-fingerprint-"));
-  const appPath = path.join(workspace, "YuuMira.app");
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-bundle-fingerprint-"));
+  const appPath = path.join(workspace, "Peng.app");
   const appResources = path.join(appPath, "Contents", "Resources");
   const appServer = path.join(appResources, "server");
   const appShared = path.join(appResources, "resources");
@@ -231,15 +231,15 @@ test("flags same-count resource content drift", async () => {
   await mkdir(path.join(cloneResources, "craft-logos"), { recursive: true });
   await writeFile(path.join(appPath, "Contents", "Info.plist"), `<?xml version="1.0"?>
 <plist><dict>
-<key>CFBundleIdentifier</key><string>app.yuuone.yuumira</string>
-<key>CFBundleExecutable</key><string>craft-agents-tauri</string>
-<key>CFBundleURLSchemes</key><array><string>yuumira</string><string>craftagents</string></array>
+<key>CFBundleIdentifier</key><string>com.yaserxuanfrankfaraz.peng</string>
+<key>CFBundleExecutable</key><string>Peng</string>
+<key>CFBundleURLSchemes</key><array><string>peng</string><string>craftagents</string></array>
 </dict></plist>
 `, "utf8");
   await writeFile(path.join(appServer, "bin", "craft-server"), "server\n", "utf8");
-  await writeFile(path.join(appServer, "resources", "webui", "index.html"), "<title>YuuMira</title>", "utf8");
+  await writeFile(path.join(appServer, "resources", "webui", "index.html"), "<title>Peng</title>", "utf8");
   await writeFile(path.join(cloneResources, "webui", "index.html"), "<title>Changed</title>", "utf8");
-  await writeFile(path.join(workspace, "package.json"), JSON.stringify({ name: "yuumira-cleanroom" }), "utf8");
+  await writeFile(path.join(workspace, "package.json"), JSON.stringify({ name: "peng-cleanroom" }), "utf8");
   for (const directory of ["bin", "scripts", "tool-icons", "themes", "docs", "permissions", "release-notes", "craft-logos"]) {
     await writeFile(path.join(appShared, directory, directory === "bin" ? "docx-tool" : "same.txt"), "same\n", "utf8");
     await writeFile(path.join(cloneResources, directory, directory === "bin" ? "docx-tool" : "same.txt"), "same\n", "utf8");
@@ -249,7 +249,7 @@ test("flags same-count resource content drift", async () => {
   await writeFile(path.join(appShared, "source.png"), "source", "utf8");
   await writeFile(path.join(cloneResources, "source.png"), "source", "utf8");
 
-  const result = auditYuuMiraBundle({ appPath, workspace, resourceDir: cloneResources });
+  const result = auditPengBundle({ appPath, workspace, resourceDir: cloneResources });
   const webuiCheck = result.comparisons.checks.find((item) => item.id === "resources.webui.fingerprint");
   const packagesCheck = result.comparisons.checks.find((item) => item.id === "server.packages");
 
@@ -260,13 +260,13 @@ test("flags same-count resource content drift", async () => {
 });
 
 test("flags Finder-style duplicate resource variants", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-bundle-duplicates-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-bundle-duplicates-"));
   const cloneResources = path.join(workspace, "resources");
   await mkdir(path.join(cloneResources, "tool-icons"), { recursive: true });
   await mkdir(path.join(cloneResources, "bin"), { recursive: true });
   await mkdir(path.join(cloneResources, "scripts"), { recursive: true });
   await mkdir(path.join(cloneResources, "webui"), { recursive: true });
-  await writeFile(path.join(workspace, "package.json"), JSON.stringify({ name: "yuumira-cleanroom" }), "utf8");
+  await writeFile(path.join(workspace, "package.json"), JSON.stringify({ name: "peng-cleanroom" }), "utf8");
   await writeFile(path.join(cloneResources, "config-defaults.json"), "{}", "utf8");
   await writeFile(path.join(cloneResources, "config-defaults 2.json"), "{}", "utf8");
   await writeFile(path.join(cloneResources, "bin", "docx-tool"), "#!/bin/sh\n", "utf8");
@@ -275,10 +275,10 @@ test("flags Finder-style duplicate resource variants", async () => {
   await writeFile(path.join(cloneResources, "tool-icons", "terminal 2.svg"), "<svg />", "utf8");
   await writeFile(path.join(cloneResources, "scripts", "docx_tool.py"), "print('ok')\n", "utf8");
   await writeFile(path.join(cloneResources, "scripts", "docx_tool 3.py"), "print('ok')\n", "utf8");
-  await writeFile(path.join(cloneResources, "webui", "index.html"), "<title>YuuMira</title>", "utf8");
-  await writeFile(path.join(cloneResources, "webui", "index 2.html"), "<title>YuuMira</title>", "utf8");
+  await writeFile(path.join(cloneResources, "webui", "index.html"), "<title>Peng</title>", "utf8");
+  await writeFile(path.join(cloneResources, "webui", "index 2.html"), "<title>Peng</title>", "utf8");
 
-  const result = auditYuuMiraBundle({ appPath: path.join(workspace, "Missing.app"), workspace, resourceDir: cloneResources });
+  const result = auditPengBundle({ appPath: path.join(workspace, "Missing.app"), workspace, resourceDir: cloneResources });
   const duplicatesCheck = result.comparisons.checks.find((item) => item.id === "resources.duplicates");
 
   assert.equal(result.clone.duplicateVariants.total, 5);
@@ -302,10 +302,10 @@ test("flags Finder-style duplicate resource variants", async () => {
 });
 
 test("flags missing webui entrypoint assets", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-webui-entrypoints-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-webui-entrypoints-"));
   const cloneResources = path.join(workspace, "resources");
   await mkdir(path.join(cloneResources, "webui", "assets"), { recursive: true });
-  await writeFile(path.join(workspace, "package.json"), JSON.stringify({ name: "yuumira-cleanroom" }), "utf8");
+  await writeFile(path.join(workspace, "package.json"), JSON.stringify({ name: "peng-cleanroom" }), "utf8");
   await writeFile(path.join(cloneResources, "webui", "index.html"), `
     <div id="root"></div>
     <script type="module" src="./assets/main-present.js"></script>
@@ -316,7 +316,7 @@ test("flags missing webui entrypoint assets", async () => {
   `, "utf8");
   await writeFile(path.join(cloneResources, "webui", "assets", "main-present.js"), "console.log('ok')\n", "utf8");
 
-  const result = auditYuuMiraBundle({ appPath: path.join(workspace, "Missing.app"), workspace, resourceDir: cloneResources });
+  const result = auditPengBundle({ appPath: path.join(workspace, "Missing.app"), workspace, resourceDir: cloneResources });
   const entrypointCheck = result.comparisons.checks.find((item) => item.id === "resources.webui.entrypoints");
 
   assert.equal(result.clone.webuiEntrypoints.ok, false);

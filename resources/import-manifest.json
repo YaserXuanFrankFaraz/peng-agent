@@ -1,8 +1,8 @@
 {
   "version": 1,
   "importedAt": "2026-08-07T22:53:22.737Z",
-  "sourceRoot": "/Applications/YuuMira.app/Contents/Resources/resources",
-  "outputRoot": "/Users/neoy/Documents/ChatGPT/Copy YuuMira/resources",
+  "sourceRoot": "bundled-resources",
+  "outputRoot": "resources",
   "directories": [
     {
       "directory": "tool-icons",

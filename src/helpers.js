@@ -322,7 +322,7 @@ export function diagnoseHelperResult(result) {
 }
 
 function defaultResourceDir() {
-  return process.env.YUUMIRA_RESOURCE_DIR ?? path.join(process.cwd(), "resources");
+  return process.env.PENG_RESOURCE_DIR ?? path.join(process.cwd(), "resources");
 }
 
 function resolveSmokeProfile(profile) {
@@ -341,7 +341,7 @@ function resolveBehaviorProfile(profile) {
 }
 
 async function runIcalBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env, keepTemp }) {
-  const tempDir = await mkdtemp(path.join(tmpdir(), "yuumira-ical-behavior-"));
+  const tempDir = await mkdtemp(path.join(tmpdir(), "peng-ical-behavior-"));
   const calendar = path.join(tempDir, "calendar.ics");
   const eventData = JSON.stringify([
     {
@@ -405,7 +405,7 @@ async function runIcalBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env,
 }
 
 async function runXlsxBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env, keepTemp }) {
-  const tempDir = await mkdtemp(path.join(tmpdir(), "yuumira-xlsx-behavior-"));
+  const tempDir = await mkdtemp(path.join(tmpdir(), "peng-xlsx-behavior-"));
   const workbook = path.join(tempDir, "workbook.xlsx");
   const csv = path.join(tempDir, "workbook.csv");
   const steps = [];
@@ -515,7 +515,7 @@ async function runXlsxBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env,
 }
 
 async function runDocxBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env, keepTemp }) {
-  const tempDir = await mkdtemp(path.join(tmpdir(), "yuumira-docx-behavior-"));
+  const tempDir = await mkdtemp(path.join(tmpdir(), "peng-docx-behavior-"));
   const created = path.join(tempDir, "created.docx");
   const template = path.join(tempDir, "template.docx");
   const filled = path.join(tempDir, "filled.docx");
@@ -627,7 +627,7 @@ async function runDocxBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env,
 }
 
 async function runImgBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env, keepTemp }) {
-  const tempDir = await mkdtemp(path.join(tmpdir(), "yuumira-img-behavior-"));
+  const tempDir = await mkdtemp(path.join(tmpdir(), "peng-img-behavior-"));
   const input = path.join(tempDir, "input.png");
   const resized = path.join(tempDir, "resized.png");
   const converted = path.join(tempDir, "converted.jpg");
@@ -688,7 +688,7 @@ async function runImgBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env, 
 }
 
 async function runMarkitdownBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env, keepTemp }) {
-  const tempDir = await mkdtemp(path.join(tmpdir(), "yuumira-markitdown-behavior-"));
+  const tempDir = await mkdtemp(path.join(tmpdir(), "peng-markitdown-behavior-"));
   const txt = path.join(tempDir, "plain.txt");
   const docx = path.join(tempDir, "sample.docx");
   const steps = [];
@@ -746,7 +746,7 @@ async function runMarkitdownBasicBehavior({ profile, cwd, resourceDir, timeoutMs
 }
 
 async function runPdfBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env, keepTemp }) {
-  const tempDir = await mkdtemp(path.join(tmpdir(), "yuumira-pdf-behavior-"));
+  const tempDir = await mkdtemp(path.join(tmpdir(), "peng-pdf-behavior-"));
   const tiny = path.join(tempDir, "tiny.png");
   const image = path.join(tempDir, "image.png");
   const pdf = path.join(tempDir, "input.pdf");
@@ -807,7 +807,7 @@ async function runPdfBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env, 
 }
 
 async function runPptxBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env, keepTemp }) {
-  const tempDir = await mkdtemp(path.join(tmpdir(), "yuumira-pptx-behavior-"));
+  const tempDir = await mkdtemp(path.join(tmpdir(), "peng-pptx-behavior-"));
   const deck = path.join(tempDir, "deck.pptx");
   const steps = [];
   try {
@@ -865,7 +865,7 @@ async function runPptxBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env,
 }
 
 async function runDocDiffBasicBehavior({ profile, cwd, resourceDir, timeoutMs, env, keepTemp }) {
-  const tempDir = await mkdtemp(path.join(tmpdir(), "yuumira-doc-diff-behavior-"));
+  const tempDir = await mkdtemp(path.join(tmpdir(), "peng-doc-diff-behavior-"));
   const left = path.join(tempDir, "a.txt");
   const right = path.join(tempDir, "b.txt");
   const steps = [];

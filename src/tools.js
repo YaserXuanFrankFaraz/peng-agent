@@ -14,7 +14,7 @@ import { allowSleep, powerState, preventSleep } from "./power.js";
 import { createQueuedMessage } from "./queue.js";
 import { listToolIcons, resolveToolIcon, resourceManifest } from "./resources.js";
 import { listHelpers, listHelperBehaviorProfiles, listHelperSmokeProfiles, planHelperCommand, runHelperCommand, runHelperBehaviorProfile, smokeHelpers } from "./helpers.js";
-import { auditYuuMiraBundle } from "./bundle-audit.js";
+import { auditPengBundle } from "./app-audit.js";
 import { searchWorkspace } from "./search.js";
 import { discoverSkills } from "./skills.js";
 import { cacheSourceIcon, callMcpSourceTool, createSourceOAuthAuthorizationRequest, discoverSources, exchangeSourceOAuthCode, exchangeSourceOAuthDeviceCode, executeApiSourceRequest, getSourceRuntimeSignature, listMcpSourceTools, pollSourceOAuthDeviceCode, refreshSourceOAuthCredential, startSourceOAuthDeviceFlow, testSource } from "./sources.js";
@@ -1117,7 +1117,7 @@ export function createDefaultTools({ workspace }) {
     },
     {
       name: "git.parse_log",
-      description: "Parse git log records produced by the YuuMira-compatible pretty format.",
+      description: "Parse git log records produced by the Peng-compatible pretty format.",
       inputSchema: { type: "object", required: ["text"], properties: { text: { type: "string" } } },
       async run(input) {
         return { commits: parseGitLog(input.text), prettyFormat: gitLogPrettyFormat() };
@@ -1393,7 +1393,7 @@ export function createDefaultTools({ workspace }) {
     },
     {
       name: "resources.manifest",
-      description: "List YuuMira-compatible static resource roots, themes, and tool icon assets.",
+      description: "List Peng-compatible static resource roots, themes, and tool icon assets.",
       inputSchema: { type: "object", properties: {} },
       async run() {
         return resourceManifest();
@@ -1401,7 +1401,7 @@ export function createDefaultTools({ workspace }) {
     },
     {
       name: "audit.bundle",
-      description: "Compare the authorized installed YuuMira bundle structure with this clean-room clone.",
+      description: "Audit a local Peng bundle against the repository resources and runtime.",
       inputSchema: {
         type: "object",
         properties: {
@@ -1410,7 +1410,7 @@ export function createDefaultTools({ workspace }) {
         }
       },
       async run(input, context) {
-        return auditYuuMiraBundle({
+        return auditPengBundle({
           appPath: input.appPath,
           workspace: context.workspace ?? workspace,
           resourceDir: input.resourceDir
@@ -1419,7 +1419,7 @@ export function createDefaultTools({ workspace }) {
     },
     {
       name: "tool_icons.list",
-      description: "List YuuMira-compatible command icon resources.",
+      description: "List Peng-compatible command icon resources.",
       inputSchema: { type: "object", properties: {} },
       async run() {
         return listToolIcons();
@@ -1435,7 +1435,7 @@ export function createDefaultTools({ workspace }) {
     },
     {
       name: "helpers.list",
-      description: "List imported YuuMira helper bin wrappers and scripts.",
+      description: "List imported Peng helper bin wrappers and scripts.",
       inputSchema: { type: "object", properties: {} },
       async run() {
         return listHelpers();
@@ -1443,7 +1443,7 @@ export function createDefaultTools({ workspace }) {
     },
     {
       name: "helpers.plan",
-      description: "Plan a YuuMira helper wrapper invocation without executing it.",
+      description: "Plan a Peng helper wrapper invocation without executing it.",
       inputSchema: {
         type: "object",
         required: ["name"],
@@ -1459,7 +1459,7 @@ export function createDefaultTools({ workspace }) {
     },
     {
       name: "helpers.run",
-      description: "Execute an imported YuuMira helper wrapper and return stdout, stderr, and exit code.",
+      description: "Execute an imported Peng helper wrapper and return stdout, stderr, and exit code.",
       inputSchema: {
         type: "object",
         required: ["name"],
@@ -1481,7 +1481,7 @@ export function createDefaultTools({ workspace }) {
     },
     {
       name: "helpers.smoke",
-      description: "Run lightweight smoke checks against imported YuuMira helper wrappers.",
+      description: "Run lightweight smoke checks against imported Peng helper wrappers.",
       inputSchema: {
         type: "object",
         properties: {
@@ -1504,7 +1504,7 @@ export function createDefaultTools({ workspace }) {
     },
     {
       name: "helpers.smoke_profiles",
-      description: "List standard YuuMira helper smoke profiles.",
+      description: "List standard Peng helper smoke profiles.",
       inputSchema: { type: "object", properties: {} },
       async run() {
         return listHelperSmokeProfiles();
@@ -1512,7 +1512,7 @@ export function createDefaultTools({ workspace }) {
     },
     {
       name: "helpers.behavior_profiles",
-      description: "List standard YuuMira helper behavior smoke profiles.",
+      description: "List standard Peng helper behavior smoke profiles.",
       inputSchema: { type: "object", properties: {} },
       async run() {
         return listHelperBehaviorProfiles();
@@ -1520,7 +1520,7 @@ export function createDefaultTools({ workspace }) {
     },
     {
       name: "helpers.behavior_smoke",
-      description: "Run a standard YuuMira helper behavior smoke profile.",
+      description: "Run a standard Peng helper behavior smoke profile.",
       inputSchema: {
         type: "object",
         properties: {

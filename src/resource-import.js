@@ -1,18 +1,20 @@
 import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const DEFAULT_SOURCE = "/Applications/YuuMira.app/Contents/Resources/resources";
-const DEFAULT_WEBUI_SOURCE = "/Applications/YuuMira.app/Contents/Resources/server/resources/webui";
 const DEFAULT_DIRECTORIES = ["tool-icons", "themes", "docs", "permissions", "release-notes", "craft-logos", "bin", "scripts"];
 const DEFAULT_FILES = ["config-defaults.json", "source.png"];
 const IGNORED_RESOURCE_NAMES = new Set(["__pycache__"]);
 const IGNORED_RESOURCE_EXTENSIONS = new Set([".pyc", ".pyo"]);
 
-export async function importYuuMiraResources({ args = process.argv.slice(2), cwd = process.cwd(), now = new Date() } = {}) {
+export async function importPengResources({ args = process.argv.slice(2), cwd = process.cwd(), now = new Date() } = {}) {
   const options = parseImportOptions(args, cwd);
   const selectedDirectories = selectedResourceDirectories(options);
   const selectedFiles = selectedResourceFiles(options);
-  const sourceRoot = path.resolve(options.from);
+  if (selectedDirectories.length > 0 || selectedFiles.length > 0) {
+    requireSource(options.from, "--from");
+  }
+  if (options.includeWebui || options.webuiOnly) requireSource(options.webuiFrom, "--webui-from");
+  const sourceRoot = options.from ? path.resolve(options.from) : null;
   const outputRoot = path.resolve(options.out);
   const directories = [];
   const files = [];
@@ -72,7 +74,7 @@ export async function importYuuMiraResources({ args = process.argv.slice(2), cwd
 
 export function parseImportOptions(args, cwd = process.cwd()) {
   const options = {
-    from: DEFAULT_SOURCE,
+    from: null,
     out: path.join(cwd, "resources"),
     toolIconsOnly: false,
     themesOnly: false,
@@ -80,7 +82,7 @@ export function parseImportOptions(args, cwd = process.cwd()) {
     helpersOnly: false,
     includeWebui: false,
     webuiOnly: false,
-    webuiFrom: DEFAULT_WEBUI_SOURCE,
+    webuiFrom: null,
     dryRun: false,
     noClean: false,
     help: false
@@ -110,9 +112,9 @@ export function parseImportOptions(args, cwd = process.cwd()) {
 }
 
 export function resourceImportHelp() {
-  return `import-yuumira-resources [--from /Applications/YuuMira.app/Contents/Resources/resources] [--out resources] [--tool-icons-only] [--themes-only] [--docs-only] [--helpers-only] [--include-webui] [--webui-only] [--webui-from /Applications/YuuMira.app/Contents/Resources/server/resources/webui] [--dry-run] [--no-clean]
+  return `import-peng-resources --from <resource-directory> [--out resources] [--tool-icons-only] [--themes-only] [--docs-only] [--helpers-only] [--include-webui] [--webui-only] [--webui-from <webui-directory>] [--dry-run] [--no-clean]
 
-Import authorized YuuMira static resources into this clean-room workspace.
+Import static resources from an explicitly supplied directory into a Peng workspace. Peng ships with its own bundled resources and does not require another installed application.
 `;
 }
 
@@ -134,6 +136,10 @@ function requireValue(args, index, option) {
   const value = args[index];
   if (!value || value.startsWith("--")) throw new Error(`${option} requires a value.`);
   return value;
+}
+
+function requireSource(value, option) {
+  if (!value) throw new Error(`${option} is required; Peng does not read resources from another installed application.`);
 }
 
 async function describeDirectory(directory) {

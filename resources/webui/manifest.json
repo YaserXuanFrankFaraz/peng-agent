@@ -1,7 +1,7 @@
 {
-  "name": "YuuMira",
-  "short_name": "YuuMira",
-  "description": "YuuMira AI agent interface",
+  "name": "Peng",
+  "short_name": "Peng",
+  "description": "Peng AI agent interface",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#1F1F24",

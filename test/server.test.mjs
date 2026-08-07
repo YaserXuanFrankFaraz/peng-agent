@@ -58,11 +58,11 @@ test("serves health, sessions, and run endpoints", async () => {
     const modelRequest = await getJson(`${baseUrl}/api/provider/model-request?profile=anthropic&apiKey=test-key`);
     assert.equal(modelRequest.url, "https://api.anthropic.com/v1/models");
     assert.equal(modelRequest.headers["x-api-key"], "test-key");
-    assert.match(await getText(`${baseUrl}/`), /<title>YuuMira<\/title>/);
+    assert.match(await getText(`${baseUrl}/`), /<title>Peng<\/title>/);
     const loginHtml = await getText(`${baseUrl}/login`);
-    assert.match(loginHtml, /<title>YuuMira/);
+    assert.match(loginHtml, /<title>Peng/);
     assert.match(loginHtml, /id="login-form"/);
-    assert.equal((await getJson(`${baseUrl}/manifest.json`)).name, "YuuMira");
+    assert.equal((await getJson(`${baseUrl}/manifest.json`)).name, "Peng");
 
     const session = await postJson(`${baseUrl}/api/sessions`, {
       prompt: "Investigate server API",
@@ -338,7 +338,7 @@ test("serves health, sessions, and run endpoints", async () => {
     assert.equal(resources.webuiEntrypoints.ok, true);
     assert.equal(resources.webuiEntrypoints.checkedCount > 0, true);
     assert.equal(resources.files.some((file) => file.fileName === "source.png"), true);
-    const bundleAudit = await getJson(`${baseUrl}/api/audit/bundle?appPath=/missing/YuuMira.app`);
+    const bundleAudit = await getJson(`${baseUrl}/api/audit/bundle?appPath=/missing/Peng.app`);
     assert.equal(bundleAudit.app.exists, false);
     assert.equal(bundleAudit.comparisons.ok, false);
     const npmIconResponse = await fetch(`${baseUrl}/resources/tool-icons/npm.png`);
@@ -356,8 +356,8 @@ test("serves health, sessions, and run endpoints", async () => {
     const webuiAsset = resources.webui.find((file) => file.relativePath.startsWith("assets/") && file.fileName.endsWith(".js"));
     assert.equal((await fetch(`${baseUrl}${webuiAsset.path}`)).headers.get("content-type"), "text/javascript; charset=utf-8");
     const rootHtml = await getText(`${baseUrl}/`);
-    assert.match(rootHtml, /YuuMira/);
-    assert.equal((await getJson(`${baseUrl}/manifest.json`)).name, "YuuMira");
+    assert.match(rootHtml, /Peng/);
+    assert.equal((await getJson(`${baseUrl}/manifest.json`)).name, "Peng");
     const rootAssetPath = `/${webuiAsset.relativePath}`;
     assert.equal((await fetch(`${baseUrl}${rootAssetPath}`)).headers.get("content-type"), "text/javascript; charset=utf-8");
     const rootScript = rootHtml.match(/\bsrc=["']\.\/(assets\/[^"']+\.js)["']/)?.[1];
@@ -570,13 +570,13 @@ test("streams and controls runs over WebSocket", async () => {
 	    assert.equal((await rpc("rpc-file-exists-2", "file:exists", [{ path: "generated/rpc-write.txt" }])).result.exists, false);
 	    assert.match((await rpc("rpc-file-thumbnail-1", "file:generateThumbnail", [{ path: "rpc-note.txt" }])).result.dataUrl, /^data:application\/octet-stream;base64,/);
 	    assert.equal((await rpc("rpc-file-store-attachment-1", "file:storeAttachment", [{ fileName: "stored.txt", content: Buffer.from("stored attachment").toString("base64") }])).result.fileName, "stored.txt");
-	    assert.equal((await rpc("rpc-file-read-attachment-1", "file:readAttachment", [{ path: ".yuumira/attachments/stored.txt" }])).result.base64, Buffer.from("stored attachment").toString("base64"));
+	    assert.equal((await rpc("rpc-file-read-attachment-1", "file:readAttachment", [{ path: ".peng/attachments/stored.txt" }])).result.base64, Buffer.from("stored attachment").toString("base64"));
 	    const fileDialog = (await rpc("rpc-file-dialog-1", "file:openDialog", [{ defaultPath: ".", filters: [{ extensions: ["txt"] }] }])).result;
 	    assert.equal(fileDialog.cancelled, false);
 	    assert.equal(fileDialog.selected, "rpc-note.txt");
 	    await gitExec(app.workspace, ["init"]);
-	    await gitExec(app.workspace, ["config", "user.name", "YuuMira RPC Test"]);
-	    await gitExec(app.workspace, ["config", "user.email", "yuumira-rpc@example.invalid"]);
+	    await gitExec(app.workspace, ["config", "user.name", "Peng RPC Test"]);
+	    await gitExec(app.workspace, ["config", "user.email", "peng-rpc@example.invalid"]);
 	    assert.equal((await rpc("rpc-git-status-1", "git:getStatus")).result.ok, true);
 	    assert.equal((await rpc("rpc-git-stage-1", "git:stage", [{ paths: ["rpc-note.txt"] }])).result.ok, true);
 	    assert.equal((await rpc("rpc-git-message-1", "git:generateCommitMessage")).result.message.includes("Update"), true);
@@ -633,7 +633,7 @@ test("streams and controls runs over WebSocket", async () => {
 	    const resourcesExport = (await rpc("rpc-resources-export-1", "resources:export")).result;
 	    assert.equal(resourcesExport.exported, true);
 	    assert.equal(resourcesExport.manifest.toolIcons.count > 0, true);
-	    assert.equal(resourcesExport.target, ".yuumira/resource-exports/resource-manifest.json");
+	    assert.equal(resourcesExport.target, ".peng/resource-exports/resource-manifest.json");
 	    const resourcesImport = (await rpc("rpc-resources-import-1", "resources:import", [{ includeWebui: true, out: "imported-resources" }])).result;
 	    assert.equal(resourcesImport.imported, true);
 	    assert.equal(resourcesImport.outputRoot, "imported-resources");
@@ -687,7 +687,7 @@ test("streams and controls runs over WebSocket", async () => {
 	    const deletedSkill = (await rpc("rpc-skills-delete-1", "skills:delete", [{ slug: "delete-me" }])).result;
 	    assert.equal(deletedSkill.deleted, true);
 	    assert.equal(deletedSkill.softDeleted, true);
-	    assert.match(deletedSkill.archivedPath, /^\.yuumira\/deleted-skills\//);
+	    assert.match(deletedSkill.archivedPath, /^\.peng\/deleted-skills\//);
 	    assert.equal((await rpc("rpc-skills-changed-2", "skills:changed")).result.skills.some((skill) => skill.slug === "delete-me"), false);
 		    const rpcNotificationShow = (await rpc("rpc-notification-show-1", "notification:show", [{ title: "RPC notice", body: "Notification body", route: "session" }])).result;
 		    assert.equal(rpcNotificationShow.status, "recorded");
@@ -891,7 +891,7 @@ test("streams and controls runs over WebSocket", async () => {
 	    const checkedUpdate = (await rpc("rpc-update-check-1", "update:check", [{ latestVersion: "0.11.13", totalBytes: 2048 }])).result;
 	    assert.equal(checkedUpdate.available, true);
 	    assert.equal(checkedUpdate.status, "available");
-	    const downloadedUpdate = (await rpc("rpc-update-download-1", "update:download", [{ totalBytes: 2048, artifactPath: ".yuumira/update/0.11.13.app.tar" }])).result;
+	    const downloadedUpdate = (await rpc("rpc-update-download-1", "update:download", [{ totalBytes: 2048, artifactPath: ".peng/update/0.11.13.app.tar" }])).result;
 	    assert.equal(downloadedUpdate.status, "downloaded");
 	    assert.equal(downloadedUpdate.downloadProgress.percent, 100);
 	    assert.equal((await rpc("rpc-update-progress-1", "update:downloadProgress")).result.status, "completed");
@@ -924,7 +924,7 @@ test("streams and controls runs over WebSocket", async () => {
 });
 
 test("starts through the craft-server compatible entrypoint", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-craft-server-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-craft-server-test-"));
   const lines = [];
   const { app, info } = await startHeadlessServer({
     args: ["--port", "0", "--workspace", workspace, "--json"],
@@ -945,7 +945,7 @@ test("starts through the craft-server compatible entrypoint", async () => {
 });
 
 test("plans Bun compile packaging for craft-server", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-craft-server-build-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-craft-server-build-test-"));
   const options = parseBuildOptions(["--outfile", "dist/server-bin", "--target", "bun-darwin-arm64", "--verify"], workspace, { BUN_BINARY: "bun-test" });
   const lines = [];
   const result = await buildCraftServer({
@@ -989,7 +989,7 @@ test("captures OAuth callback codes", async () => {
 });
 
 async function testServer() {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-server-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-server-test-"));
   const runtime = createRuntime({
     workspace,
     store: new JsonStore({ workspace }),

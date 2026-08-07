@@ -29,7 +29,7 @@ self.addEventListener('push', (event) => {
     if (clients.some((c) => c.focused)) return
 
     const sessionId = payload.sessionId || ''
-    await self.registration.showNotification(payload.title || 'YuuMira', {
+    await self.registration.showNotification(payload.title || 'Peng', {
       body: payload.body || '',
       // Collapse per-session so a busy task shows one latest-state notification.
       tag: sessionId || 'craft-agents',

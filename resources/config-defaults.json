@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "Default configuration values for YuuMira",
+  "description": "Default configuration values for Peng",
   "defaults": {
     "notificationsEnabled": true,
     "colorTheme": "default",

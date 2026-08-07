@@ -6,20 +6,18 @@
   "description": "Peng, an original clean-room AI agent application.",
   "bin": {
     "peng": "./bin/peng.mjs",
-    "yuumira": "./bin/yuumira.mjs",
     "craft-server": "./bin/craft-server.mjs",
     "build-craft-server": "./bin/build-craft-server.mjs",
     "package-macos-app": "./bin/package-macos-app.mjs",
-    "import-yuumira-resources": "./bin/import-yuumira-resources.mjs"
+    "import-peng-resources": "./bin/import-peng-resources.mjs"
   },
   "scripts": {
     "start": "node ./bin/peng.mjs",
     "server": "node ./bin/craft-server.mjs",
     "build:craft-server": "node ./bin/build-craft-server.mjs",
     "package:macos": "node ./bin/package-macos-app.mjs --out dist/Peng.app --sign --verify",
-    "resources:import": "node ./bin/import-yuumira-resources.mjs",
+    "resources:import": "node ./bin/import-peng-resources.mjs",
     "test": "node --test --test-concurrency=1",
-    "posttest": "node ./bin/import-yuumira-resources.mjs --include-webui >/dev/null",
     "demo": "node ./bin/peng.mjs run \"Inspect this workspace and suggest next steps\""
   },
   "engines": {

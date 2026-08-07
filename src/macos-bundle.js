@@ -9,30 +9,30 @@ export const MACOS_BUNDLE_DEFAULTS = {
   bundleIdentifier: "com.yaserxuanfrankfaraz.peng",
   version: "0.1.0",
   executableName: "Peng",
-  urlSchemes: ["peng", "yuumira", "craftagents"]
+  urlSchemes: ["peng", "craftagents"]
 };
 
 export function parseBundleOptions(args = [], cwd = process.cwd(), env = process.env) {
-  const outDir = readFlag(args, "--out") ?? env.PENG_APP_OUT ?? env.YUUMIRA_APP_OUT ?? path.join(cwd, "dist", "Peng.app");
+  const outDir = readFlag(args, "--out") ?? env.PENG_APP_OUT ?? path.join(cwd, "dist", "Peng.app");
   const defaultResourcesDir = path.join(cwd, "resources");
   const importedWebuiDir = path.join(defaultResourcesDir, "webui");
   const defaultIconPath = path.join(defaultResourcesDir, "peng.icns");
-  const iconPath = readFlag(args, "--icon") ?? env.PENG_APP_ICON ?? env.YUUMIRA_APP_ICON ?? (existsSync(defaultIconPath) ? defaultIconPath : null);
+  const iconPath = readFlag(args, "--icon") ?? env.PENG_APP_ICON ?? (existsSync(defaultIconPath) ? defaultIconPath : null);
   return {
     ...MACOS_BUNDLE_DEFAULTS,
-    appName: readFlag(args, "--name") ?? env.PENG_APP_NAME ?? env.YUUMIRA_APP_NAME ?? MACOS_BUNDLE_DEFAULTS.appName,
-    bundleIdentifier: readFlag(args, "--bundle-id") ?? env.PENG_BUNDLE_ID ?? env.YUUMIRA_BUNDLE_ID ?? MACOS_BUNDLE_DEFAULTS.bundleIdentifier,
-    version: readFlag(args, "--version") ?? env.PENG_APP_VERSION ?? env.YUUMIRA_APP_VERSION ?? MACOS_BUNDLE_DEFAULTS.version,
-    executableName: readFlag(args, "--executable") ?? env.PENG_EXECUTABLE_NAME ?? env.YUUMIRA_EXECUTABLE_NAME ?? MACOS_BUNDLE_DEFAULTS.executableName,
+    appName: readFlag(args, "--name") ?? env.PENG_APP_NAME ?? MACOS_BUNDLE_DEFAULTS.appName,
+    bundleIdentifier: readFlag(args, "--bundle-id") ?? env.PENG_BUNDLE_ID ?? MACOS_BUNDLE_DEFAULTS.bundleIdentifier,
+    version: readFlag(args, "--version") ?? env.PENG_APP_VERSION ?? MACOS_BUNDLE_DEFAULTS.version,
+    executableName: readFlag(args, "--executable") ?? env.PENG_EXECUTABLE_NAME ?? MACOS_BUNDLE_DEFAULTS.executableName,
     outDir: path.isAbsolute(outDir) ? outDir : path.join(cwd, outDir),
     serverBinary: readFlag(args, "--server-binary"),
     bunBinary: readFlag(args, "--bun-binary") ?? env.PENG_BUN_BINARY ?? env.BUN_BINARY ?? findExecutable("bun", env),
-    nodeBinary: readFlag(args, "--node-binary") ?? env.PENG_NODE_BINARY ?? env.YUUMIRA_NODE_BINARY ?? (findExecutable("bun", env) ? null : process.execPath),
+    nodeBinary: readFlag(args, "--node-binary") ?? env.PENG_NODE_BINARY ?? (findExecutable("bun", env) ? null : process.execPath),
     webuiDir: readFlag(args, "--webui") ?? (existsSync(importedWebuiDir) ? importedWebuiDir : path.join(cwd, "webui")),
     resourcesDir: readFlag(args, "--resources") ?? (existsSync(defaultResourcesDir) ? defaultResourcesDir : null),
     iconPath: iconPath ? (path.isAbsolute(iconPath) ? iconPath : path.join(cwd, iconPath)) : null,
     sign: hasFlag(args, "--sign"),
-    identity: readFlag(args, "--identity") ?? env.PENG_CODESIGN_IDENTITY ?? env.YUUMIRA_CODESIGN_IDENTITY ?? "-",
+    identity: readFlag(args, "--identity") ?? env.PENG_CODESIGN_IDENTITY ?? "-",
     verify: hasFlag(args, "--verify"),
     clean: !hasFlag(args, "--no-clean"),
     dryRun: hasFlag(args, "--dry-run")
@@ -147,7 +147,7 @@ export async function cleanMacosSigningAttributes(appPath) {
 }
 
 async function verifyMacosAppFromTemporaryCopy(appPath) {
-  const tempRoot = await mkdtemp(path.join(tmpdir(), "yuumira-codesign-verify-"));
+  const tempRoot = await mkdtemp(path.join(tmpdir(), "peng-codesign-verify-"));
   const tempApp = path.join(tempRoot, path.basename(appPath));
   await cp(appPath, tempApp, { recursive: true });
   await cleanMacosSigningAttributes(tempApp);
@@ -290,7 +290,7 @@ Environment:
   PENG_NODE_BINARY     Node executable to embed when using the script entrypoint
   PENG_CODESIGN_IDENTITY  Codesign identity override, defaults to ad-hoc "-"
 
-  YUUMIRA_*             Legacy compatibility aliases remain supported.
+  PENG_*             Peng packaging environment variables.
 `;
 }
 
@@ -352,7 +352,7 @@ async function brandWebuiTree(root, appName) {
     }
     if (!/\.(?:css|html|js|json|svg|txt|webmanifest)$/i.test(entry.name)) continue;
     const source = await readFile(target, "utf8");
-    const branded = source.replaceAll("YuuMira", appName);
+    const branded = source.replaceAll("Peng", appName);
     if (branded !== source) await writeFile(target, branded, "utf8");
   }
 }

@@ -4,7 +4,7 @@ import path from "node:path";
 import { listHelperBehaviorProfiles, listHelperSmokeProfiles } from "./helpers.js";
 import { webuiEntrypointIntegrity } from "./resources.js";
 
-export const DEFAULT_YUUMIRA_APP = "/Applications/YuuMira.app";
+export const DEFAULT_PENG_APP = path.join(process.cwd(), "dist", "Peng.app");
 export const WEBUI_RPC_NAMESPACES = [
   "remote",
   "server",
@@ -71,8 +71,8 @@ export const WEBUI_RPC_NAMESPACES = [
   "messaging"
 ];
 
-export function auditYuuMiraBundle({
-  appPath = DEFAULT_YUUMIRA_APP,
+export function auditPengBundle({
+  appPath = DEFAULT_PENG_APP,
   workspace = process.cwd(),
   resourceDir = path.join(workspace, "resources")
 } = {}) {
@@ -90,7 +90,7 @@ export function auditYuuMiraBundle({
   };
 }
 
-export function inspectInstalledBundle(appPath = DEFAULT_YUUMIRA_APP) {
+export function inspectInstalledBundle(appPath = DEFAULT_PENG_APP) {
   const contents = path.join(appPath, "Contents");
   const resources = path.join(contents, "Resources");
   const server = path.join(resources, "server");
@@ -100,6 +100,7 @@ export function inspectInstalledBundle(appPath = DEFAULT_YUUMIRA_APP) {
   const info = readInfoPlist(path.join(contents, "Info.plist"));
   const packageManifests = listPackageManifests(server);
   const serverPackage = readPackageJson(path.join(server, "package.json"));
+  const bundleManifest = readPackageJson(path.join(server, "bundle-manifest.json"));
   return {
     exists: existsSync(appPath),
     bundleIdentifier: info.CFBundleIdentifier ?? null,
@@ -115,8 +116,11 @@ export function inspectInstalledBundle(appPath = DEFAULT_YUUMIRA_APP) {
       webui
     },
     components: {
-      serverBinary: fileSummary(path.join(server, "bin", "craft-server")),
-      bunBinary: fileSummary(path.join(server, "vendor", "bun", "bun")),
+      serverBinary: fileSummary(existsSync(path.join(server, "craft-server")) ? path.join(server, "craft-server") : path.join(server, "bin", "craft-server")),
+      bunBinary: fileSummary(existsSync(path.join(server, "bun")) ? path.join(server, "bun") : path.join(server, "vendor", "bun", "bun")),
+      nodeBinary: fileSummary(path.join(server, "node")),
+      serverEntrypoint: fileSummary(path.join(server, "bin", "craft-server.mjs")),
+      serverSource: directorySummary(path.join(server, "src")),
       webui: directorySummary(webui),
       sharedResources: directorySummary(sharedResources),
       serverResources: directorySummary(serverResources),
@@ -142,7 +146,8 @@ export function inspectInstalledBundle(appPath = DEFAULT_YUUMIRA_APP) {
       names: packageManifests.map((manifest) => manifest.name).filter(Boolean).sort(),
       manifests: packageManifests,
       fingerprint: hashManifestList(packageManifests)
-    }
+    },
+    bundleManifest
   };
 }
 
@@ -226,19 +231,21 @@ export function compareBundleToClone(app, clone) {
     "doc-diff-basic"
   ];
   const checks = [
-    check("bundle.exists", app.exists === true, "Installed YuuMira.app is readable"),
-    check("bundle.identity", app.bundleIdentifier === "app.yuuone.yuumira", "Bundle identifier matches observed YuuMira"),
-    check("bundle.executable", app.executable === "craft-agents-tauri", "Bundle executable matches observed Tauri shell"),
-    check("bundle.urlSchemes", ["yuumira", "craftagents"].every((scheme) => app.urlSchemes.includes(scheme)), "URL schemes include yuumira and craftagents"),
-    check("server.binary", app.components.serverBinary.exists, "Installed bundle contains server/bin/craft-server"),
-    check("server.packages", installedPackagesMatchObserved(app), "Installed server package manifests match observed YuuMira package map"),
-    check("server.exports.observed", clone.exportCoverage.totalExports > 0 && clone.exportCoverage.packages.some((pkg) => pkg.name === "@craft-agent/shared" && pkg.totalExports > 0), "Installed package exports are captured for clone coverage tracking"),
+    check("bundle.exists", app.exists === true, "Installed Peng.app is readable"),
+    check("bundle.identity", app.bundleIdentifier === "com.yaserxuanfrankfaraz.peng", "Bundle identifier matches Peng"),
+    check("bundle.executable", app.executable === "Peng", "Bundle executable matches Peng"),
+    check("bundle.urlSchemes", ["peng", "craftagents"].every((scheme) => app.urlSchemes.includes(scheme)), "URL schemes include peng and craftagents"),
+    check("server.binary", app.components.serverBinary.exists || app.components.bunBinary.exists || app.components.nodeBinary.exists || app.components.serverEntrypoint.exists, "Peng bundle contains a runnable server runtime"),
+    check("server.packages", independentBundleManifest(app) || installedPackagesMatchObserved(app), "Peng bundle contains a valid self-contained server manifest"),
+    check("server.exports.observed", independentBundleManifest(app)
+      ? app.components.serverSource.exists && clone.exportCoverage.modules.length > 0
+      : clone.exportCoverage.totalExports > 0 && clone.exportCoverage.packages.some((pkg) => pkg.name === "@craft-agent/shared" && pkg.totalExports > 0), "Peng server source is bundled and represented in the local module map"),
     check("server.webui", app.components.webui.fileCount > 0 && clone.components.webui.fileCount > 0, "Server web UI assets exist in both bundle and clone resources"),
-    check("resources.webui.fingerprint", sameDirectoryFingerprint(app.components.webui, clone.components.webui), "Clone webui file manifest and content fingerprint match installed YuuMira"),
+    check("resources.webui.fingerprint", sameDirectoryFingerprint(app.components.webui, clone.components.webui), "Clone webui file manifest and content fingerprint match installed Peng"),
     check("resources.webui.entrypoints", clone.webuiEntrypoints.ok === true, "Clone web UI entrypoint HTML references resolve to imported assets"),
     check("resources.webui.rpc", clone.webuiRpcCoverage.total > 0 && clone.webuiRpcCoverage.missing.length === 0, "Clone server handles all recognized RPC channel constants extracted from imported Web UI assets"),
-    check("resources.shared.fingerprints", sharedResourceFingerprintsMatch(app.components, clone.components), "Clone shared resource manifests and content fingerprints match installed YuuMira"),
-    check("resources.rootFiles", rootResourceFilesMatch(app.components, clone.components), "Clone root resource files match installed YuuMira"),
+    check("resources.shared.fingerprints", sharedResourceFingerprintsMatch(app.components, clone.components), "Clone shared resource manifests and content fingerprints match installed Peng"),
+    check("resources.rootFiles", rootResourceFilesMatch(app.components, clone.components), "Clone root resource files match installed Peng"),
     check("resources.duplicates", clone.duplicateVariants.total === 0, "Clone resources do not contain Finder-style duplicate file variants"),
     check("resources.helpers", clone.resources.bins >= 8 && clone.resources.scripts >= 8, "Clone has helper bin wrappers and scripts"),
     check("helpers.behavior", requiredBehaviorProfiles.every((id) => clone.behaviorProfiles.includes(id)), "Clone exposes behavior smoke profiles for all document/media helpers")
@@ -410,6 +417,14 @@ function installedPackagesMatchObserved(app) {
     && manifests.every((manifest) => manifest.license === "Apache-2.0")
     && typeof app.packages.fingerprint === "string"
     && app.packages.fingerprint.length === 64;
+}
+
+function independentBundleManifest(app) {
+  return app.bundleManifest?.name === "Peng"
+    && app.bundleManifest.version === app.version
+    && app.bundleManifest.bundleIdentifier === "com.yaserxuanfrankfaraz.peng"
+    && app.bundleManifest.server?.entrypoint
+    && (app.bundleManifest.server?.binary || app.bundleManifest.server?.bun || app.bundleManifest.server?.node);
 }
 
 function sameDirectoryFingerprint(left, right) {

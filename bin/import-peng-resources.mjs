@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { importYuuMiraResources, parseImportOptions, resourceImportHelp } from "../src/resource-import.js";
+import { importPengResources, parseImportOptions, resourceImportHelp } from "../src/resource-import.js";
 
 try {
   const options = parseImportOptions(process.argv.slice(2));
@@ -7,7 +7,7 @@ try {
     process.stdout.write(resourceImportHelp());
     process.exit(0);
   }
-  const result = await importYuuMiraResources({ args: process.argv.slice(2) });
+  const result = await importPengResources({ args: process.argv.slice(2) });
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 } catch (error) {
   process.stderr.write(`${error.message}\n`);

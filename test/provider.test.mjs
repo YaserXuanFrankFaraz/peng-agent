@@ -10,9 +10,9 @@ import { repairToolArguments } from "../src/streaming.js";
 import { createDefaultTools } from "../src/tools.js";
 
 test("selects provider from environment", () => {
-  assert.equal(createProviderFromEnv({ YUUMIRA_PROVIDER: "deterministic" }).name, "deterministic");
+  assert.equal(createProviderFromEnv({ PENG_PROVIDER: "deterministic" }).name, "deterministic");
   const provider = createProviderFromEnv({
-    YUUMIRA_PROVIDER: "openai-compatible",
+    PENG_PROVIDER: "openai-compatible",
     OPENAI_API_KEY: "test-key",
     OPENAI_BASE_URL: "https://example.com/v1",
     OPENAI_MODEL: "model-a"
@@ -25,7 +25,7 @@ test("selects provider from environment", () => {
 
 test("selects provider profiles and describes active provider", () => {
   const openrouter = createProviderFromEnv({
-    YUUMIRA_PROVIDER: "openrouter",
+    PENG_PROVIDER: "openrouter",
     OPENROUTER_API_KEY: "router-key",
     OPENROUTER_MODEL: "anthropic/claude-sonnet-4"
   });
@@ -34,12 +34,12 @@ test("selects provider profiles and describes active provider", () => {
   assert.equal(openrouter.model, "anthropic/claude-sonnet-4");
   assert.equal(openrouter.apiKey, "router-key");
 
-  const ollama = createProviderFromEnv({ YUUMIRA_PROVIDER: "ollama" });
+  const ollama = createProviderFromEnv({ PENG_PROVIDER: "ollama" });
   assert.equal(ollama.profile, "ollama");
   assert.equal(ollama.baseUrl, "http://127.0.0.1:11434/v1");
   assert.equal(describeProvider(ollama).displayName, "Ollama");
   assert.equal(listProviderProfiles().some((profile) => profile.id === "lmstudio"), true);
-  assert.equal(createProviderFromEnv({ YUUMIRA_PROVIDER: "anthropic", ANTHROPIC_API_KEY: "anthropic-key" }).name, "anthropic");
+  assert.equal(createProviderFromEnv({ PENG_PROVIDER: "anthropic", ANTHROPIC_API_KEY: "anthropic-key" }).name, "anthropic");
 });
 
 test("anthropic provider maps tools and parses tool_use blocks", async () => {
@@ -290,7 +290,7 @@ test("repairs malformed streamed tool-call arguments", async () => {
 });
 
 test("runtime loops through tool results before final answer", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-provider-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-provider-test-"));
   const provider = {
     name: "scripted",
     calls: 0,
@@ -335,7 +335,7 @@ test("runtime loops through tool results before final answer", async () => {
 });
 
 test("runtime emits sanitized protocol lifecycle callbacks", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-provider-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-provider-test-"));
   const events = [];
   const provider = {
     name: "scripted",
@@ -362,7 +362,7 @@ test("runtime emits sanitized protocol lifecycle callbacks", async () => {
 });
 
 test("runtime persists streaming provider deltas and repaired tool calls", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-provider-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-provider-test-"));
   const provider = {
     name: "streamed",
     calls: 0,
@@ -399,7 +399,7 @@ test("runtime persists streaming provider deltas and repaired tool calls", async
 });
 
 test("runtime replays acknowledged queued messages after the active run", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-provider-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-provider-test-"));
   const provider = {
     name: "scripted",
     calls: 0,
@@ -437,7 +437,7 @@ test("runtime replays acknowledged queued messages after the active run", async 
 });
 
 test("runtime stops at a safe point and resumes a stopped thread", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-provider-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-provider-test-"));
   const provider = {
     name: "scripted",
     async complete({ messages }) {
@@ -468,7 +468,7 @@ test("runtime stops at a safe point and resumes a stopped thread", async () => {
 });
 
 test("runtime aborts provider work when stop is requested", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-provider-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-provider-test-"));
   let providerSignal;
   const provider = {
     name: "abortable",
@@ -506,7 +506,7 @@ test("runtime aborts provider work when stop is requested", async () => {
 });
 
 test("runtime emits structured provider failure payloads", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-provider-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-provider-test-"));
   const provider = {
     name: "failing-provider",
     async complete() {
@@ -535,7 +535,7 @@ test("runtime emits structured provider failure payloads", async () => {
 });
 
 test("runtime retries transient provider failures before completing the run", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-provider-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-provider-test-"));
   let attempts = 0;
   const provider = {
     name: "retry-provider",
@@ -575,7 +575,7 @@ test("runtime retries transient provider failures before completing the run", as
 });
 
 test("runtime records heartbeat and watchdog stale diagnostics", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-provider-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-provider-test-"));
   const runtime = createRuntime({
     workspace,
     store: new JsonStore({ workspace }),

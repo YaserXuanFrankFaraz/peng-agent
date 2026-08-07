@@ -15,7 +15,6 @@ export function themeColor(name, fallback = null, theme = DEFAULT_THEME_COLORS) 
 
 export function cssVariables(theme = DEFAULT_THEME_COLORS) {
   return Object.fromEntries(Object.entries(theme).flatMap(([key, value]) => [
-    [`--peng-${key}`, value],
-    [`--yuumira-${key}`, value]
+    [`--peng-${key}`, value]
   ]));
 }

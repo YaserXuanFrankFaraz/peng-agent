@@ -21,7 +21,6 @@ test("exposes low-risk shared compatibility surfaces", async () => {
   assert.equal(appTitle("Settings"), "Peng - Settings");
   assert.equal(themeColor("accent"), "#38bdf8");
   assert.equal(cssVariables()["--peng-text"], "#e5e7eb");
-  assert.equal(cssVariables()["--yuumira-text"], "#e5e7eb");
   assert.equal(runtimeKind({}), "node");
   assert.equal(await createNativeBridge({ invoke: async (name) => name }).call("ping").then((value) => value.value), "ping");
   assert.equal((await createRpcBridge().request("ping")).sent, false);
@@ -39,10 +38,10 @@ test("exposes low-risk shared compatibility surfaces", async () => {
   assert.equal(telemetry.list()[0].payload.apiKey, undefined);
   assert.equal(isSafeUrl("https://example.com"), true);
   assert.equal(serviceUrl("https://example.com/api/", "models"), "https://example.com/api/models");
-  assert.equal(workspaceSlug("Copy YuuMira"), "copy-yuumira");
+  assert.equal(workspaceSlug("Copy Peng"), "copy-peng");
   assert.equal(toolName("/usr/bin/npm test"), "npm");
   assert.equal(logoResourcePath(), "/resources/craft-logos/craft_app_icon.png");
-  assert.equal(versionInfo({ version: "0.1.0" }).observedYuuMiraVersion, "0.11.12");
+  assert.deepEqual(versionInfo({ version: "0.1.0" }), { version: "0.1.0", product: "Peng" });
 });
 
 test("exposes worker, interceptor, model fetcher, and power helpers", async () => {

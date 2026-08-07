@@ -5,7 +5,7 @@ export const PROVIDER_PROFILES = {
     id: "deterministic",
     displayName: "Deterministic Local",
     type: "deterministic",
-    envPrefix: "YUUMIRA"
+    envPrefix: "PENG"
   },
   openai: {
     id: "openai",
@@ -344,7 +344,7 @@ export class AnthropicProvider {
 }
 
 export function createProviderFromEnv(env = process.env) {
-  const profile = resolveProviderProfile(env.YUUMIRA_PROVIDER ?? env.CRAFT_PROVIDER ?? "deterministic");
+  const profile = resolveProviderProfile(env.PENG_PROVIDER ?? env.CRAFT_PROVIDER ?? "deterministic");
   if (profile.type === "openai-compatible") {
     return new OpenAICompatibleProvider({
       apiKey: firstEnv(env, `${profile.envPrefix}_API_KEY`, "OPENAI_API_KEY"),

@@ -15,9 +15,9 @@ export const CRAFT_SERVER_MANIFEST = {
 
 export function parseServerOptions(args = [], env = process.env, cwd = process.cwd()) {
   return {
-    host: readFlag(args, "--host") ?? env.YUUMIRA_HOST ?? env.HOST ?? "127.0.0.1",
-    port: Number(readFlag(args, "--port") ?? env.YUUMIRA_PORT ?? env.PORT ?? 4721),
-    workspace: readFlag(args, "--workspace") ?? env.YUUMIRA_WORKSPACE ?? cwd,
+    host: readFlag(args, "--host") ?? env.PENG_HOST ?? env.HOST ?? "127.0.0.1",
+    port: Number(readFlag(args, "--port") ?? env.PENG_PORT ?? env.PORT ?? 4721),
+    workspace: readFlag(args, "--workspace") ?? env.PENG_WORKSPACE ?? cwd,
     json: hasFlag(args, "--json")
   };
 }
@@ -44,7 +44,7 @@ export async function startHeadlessServer({ args = [], env = process.env, cwd = 
     port: address.port,
     workspace: options.workspace
   };
-  stdout(options.json ? JSON.stringify(info) : `Peng clean-room craft-server listening on ${url}`);
+  stdout(options.json ? JSON.stringify(info) : `Peng craft-server listening on ${url}`);
   return { app, runtime, address, info };
 }
 
@@ -56,11 +56,11 @@ Usage:
   craft-server --manifest
 
 Environment:
-  YUUMIRA_HOST       Host override
-  YUUMIRA_PORT       Port override
-  YUUMIRA_WORKSPACE  Workspace root override
+  PENG_HOST       Host override
+  PENG_PORT       Port override
+  PENG_WORKSPACE  Workspace root override
 
-This clean-room entrypoint mirrors the installed YuuMira/Craft Agents headless server boundary.
+This entrypoint provides the Peng/Craft-compatible headless server boundary.
 `;
 }
 

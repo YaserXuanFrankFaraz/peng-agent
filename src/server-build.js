@@ -3,12 +3,12 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 
 export function parseBuildOptions(args = [], cwd = process.cwd(), env = process.env) {
-  const outFile = readFlag(args, "--outfile") ?? env.YUUMIRA_CRAFT_SERVER_OUTFILE ?? path.join(cwd, "dist", "craft-server");
+  const outFile = readFlag(args, "--outfile") ?? env.PENG_CRAFT_SERVER_OUTFILE ?? path.join(cwd, "dist", "craft-server");
   return {
     entrypoint: readFlag(args, "--entrypoint") ?? path.join(cwd, "bin", "craft-server.mjs"),
     outfile: path.isAbsolute(outFile) ? outFile : path.join(cwd, outFile),
     bun: readFlag(args, "--bun") ?? env.BUN_BINARY ?? "bun",
-    target: readFlag(args, "--target") ?? env.YUUMIRA_CRAFT_SERVER_TARGET ?? null,
+    target: readFlag(args, "--target") ?? env.PENG_CRAFT_SERVER_TARGET ?? null,
     verify: hasFlag(args, "--verify"),
     dryRun: hasFlag(args, "--dry-run"),
     printCommand: hasFlag(args, "--print-command") || hasFlag(args, "--dry-run")
@@ -78,8 +78,8 @@ Usage:
 
 Environment:
   BUN_BINARY                       Bun executable override
-  YUUMIRA_CRAFT_SERVER_OUTFILE     Output executable path
-  YUUMIRA_CRAFT_SERVER_TARGET      Optional Bun compile target
+  PENG_CRAFT_SERVER_OUTFILE     Output executable path
+  PENG_CRAFT_SERVER_TARGET      Optional Bun compile target
 `;
 }
 

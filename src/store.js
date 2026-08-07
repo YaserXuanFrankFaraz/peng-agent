@@ -14,9 +14,9 @@ import { attachTerminalRecordToSession, closeTerminalSession } from "./terminal.
 export class JsonStore {
   constructor({
     workspace,
-    folder = ".yumira",
+    folder = ".peng",
     credentialBackend = createCredentialBackendFromEnv(),
-    craftUserMemoriesDir = process.env.YUUMIRA_CRAFT_USER_MEMORIES_DIR ?? path.join(homedir(), ".craft-agent", "memories")
+    craftUserMemoriesDir = process.env.PENG_CRAFT_USER_MEMORIES_DIR ?? path.join(homedir(), ".craft-agent", "memories")
   }) {
     this.workspacePath = workspace;
     this.credentialBackend = credentialBackend;

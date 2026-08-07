@@ -4,17 +4,17 @@ import { promisify } from "node:util";
 const execFileAsync = promisify(execFile);
 
 export function createCredentialBackendFromEnv(env = process.env) {
-  const mode = env.YUUMIRA_CREDENTIAL_STORE ?? env.YUUMIRA_SECRET_STORE;
+  const mode = env.PENG_CREDENTIAL_STORE ?? env.PENG_SECRET_STORE;
   if (mode === "macos-keychain" || mode === "keychain") {
     return new MacOSKeychainCredentialBackend({
-      service: env.YUUMIRA_KEYCHAIN_SERVICE ?? "YuuMira Cleanroom"
+      service: env.PENG_KEYCHAIN_SERVICE ?? "Peng"
     });
   }
   return null;
 }
 
 export class MacOSKeychainCredentialBackend {
-  constructor({ service = "YuuMira Cleanroom" } = {}) {
+  constructor({ service = "Peng" } = {}) {
     this.name = "macos-keychain";
     this.service = service;
   }

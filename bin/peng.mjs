@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-import "./yuumira.mjs";
+import "./peng-cli.mjs";

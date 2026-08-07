@@ -3,10 +3,10 @@ import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { cleanFinderDuplicateVariants, importYuuMiraResources, parseImportOptions } from "../src/resource-import.js";
+import { cleanFinderDuplicateVariants, importPengResources, parseImportOptions } from "../src/resource-import.js";
 
-test("imports authorized YuuMira resource directories", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-resource-import-"));
+test("imports authorized Peng resource directories", async () => {
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-resource-import-"));
   const source = path.join(workspace, "source");
   const webuiSource = path.join(workspace, "webui-source");
   const output = path.join(workspace, "resources");
@@ -47,11 +47,11 @@ test("imports authorized YuuMira resource directories", async () => {
   await writeFile(path.join(output, "source 3.png"), "stale", "utf8");
   await writeFile(path.join(output, "release-notes", "0.11.11 3.md"), "stale", "utf8");
   await writeFile(path.join(webuiSource, "index.html"), "<div id=\"root\"></div>\n", "utf8");
-  await writeFile(path.join(webuiSource, "manifest.json"), JSON.stringify({ name: "YuuMira" }), "utf8");
+  await writeFile(path.join(webuiSource, "manifest.json"), JSON.stringify({ name: "Peng" }), "utf8");
   await writeFile(path.join(webuiSource, "assets", "App-test.css"), "body{}\n", "utf8");
   await writeFile(path.join(webuiSource, "assets", ".DS_Store"), "ignored", "utf8");
 
-  const manifest = await importYuuMiraResources({
+  const manifest = await importPengResources({
     args: ["--from", source, "--out", output, "--include-webui", "--webui-from", webuiSource],
     now: new Date("2026-08-07T00:00:00.000Z")
   });
@@ -73,7 +73,7 @@ test("imports authorized YuuMira resource directories", async () => {
   await assert.rejects(readFile(path.join(output, "config-defaults 2.json")));
   await assert.rejects(readFile(path.join(output, "source 3.png")));
   assert.match(await readFile(path.join(output, "webui", "index.html"), "utf8"), /root/);
-  assert.equal(JSON.parse(await readFile(path.join(output, "webui", "manifest.json"), "utf8")).name, "YuuMira");
+  assert.equal(JSON.parse(await readFile(path.join(output, "webui", "manifest.json"), "utf8")).name, "Peng");
   assert.match(await readFile(path.join(output, "webui", "assets", "App-test.css"), "utf8"), /body/);
   await assert.rejects(readFile(path.join(output, "webui", "assets 2", "App-test.css")));
   await assert.rejects(readFile(path.join(output, "webui", "assets", ".DS_Store")));
@@ -82,14 +82,14 @@ test("imports authorized YuuMira resource directories", async () => {
 });
 
 test("imports only authorized server webui assets", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-webui-import-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-webui-import-"));
   const webuiSource = path.join(workspace, "webui-source");
   const output = path.join(workspace, "resources");
   await mkdir(path.join(webuiSource, "assets"), { recursive: true });
   await writeFile(path.join(webuiSource, "index.html"), "<script src=\"/assets/app.js\"></script>\n", "utf8");
   await writeFile(path.join(webuiSource, "assets", "app.js"), "console.log('webui')\n", "utf8");
 
-  const manifest = await importYuuMiraResources({
+  const manifest = await importPengResources({
     args: ["--webui-only", "--webui-from", webuiSource, "--out", output],
     now: new Date("2026-08-07T00:00:00.000Z")
   });
@@ -101,6 +101,8 @@ test("imports only authorized server webui assets", async () => {
 });
 
 test("parses resource import option combinations", () => {
+  assert.equal(parseImportOptions([]).from, null);
+  assert.equal(parseImportOptions([]).webuiFrom, null);
   assert.equal(parseImportOptions(["--tool-icons-only"]).toolIconsOnly, true);
   assert.equal(parseImportOptions(["--docs-only"]).docsOnly, true);
   assert.equal(parseImportOptions(["--helpers-only"]).helpersOnly, true);
@@ -113,8 +115,12 @@ test("parses resource import option combinations", () => {
   assert.throws(() => parseImportOptions(["--webui-from"]), /requires a value/);
 });
 
+test("requires explicit resource sources instead of reading an installed app", async () => {
+  await assert.rejects(() => importPengResources({ args: [] }), /--from is required/);
+});
+
 test("cleans Finder-style resource variants directly", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-resource-clean-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-resource-clean-"));
   const output = path.join(workspace, "resources");
   await mkdir(path.join(output, "docs"), { recursive: true });
   await writeFile(path.join(output, "config-defaults.json"), "{}", "utf8");

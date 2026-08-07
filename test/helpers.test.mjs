@@ -6,7 +6,7 @@ import test from "node:test";
 import { diagnoseHelperResult, listHelpers, listHelperBehaviorProfiles, listHelperSmokeProfiles, planHelperCommand, runHelperCommand, runHelperBehaviorProfile, smokeHelpers } from "../src/helpers.js";
 
 test("lists, plans, and runs imported helper wrappers", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-helper-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-helper-test-"));
   const resourceDir = path.join(workspace, "resources");
   await mkdir(path.join(resourceDir, "bin"), { recursive: true });
   await mkdir(path.join(resourceDir, "scripts"), { recursive: true });
@@ -37,7 +37,7 @@ test("lists, plans, and runs imported helper wrappers", async () => {
 });
 
 test("smokes imported helper wrappers and reports failures", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-helper-smoke-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-helper-smoke-"));
   const resourceDir = path.join(workspace, "resources");
   await mkdir(path.join(resourceDir, "bin"), { recursive: true });
   await mkdir(path.join(resourceDir, "scripts"), { recursive: true });
@@ -65,7 +65,7 @@ test("smokes imported helper wrappers and reports failures", async () => {
 });
 
 test("runs ical basic behavior smoke profile", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-helper-behavior-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-helper-behavior-"));
   const resourceDir = path.join(workspace, "resources");
   await mkdir(path.join(resourceDir, "bin"), { recursive: true });
   await mkdir(path.join(resourceDir, "scripts"), { recursive: true });
@@ -99,7 +99,7 @@ exit 2
 });
 
 test("runs xlsx basic behavior smoke profile", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-helper-xlsx-behavior-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-helper-xlsx-behavior-"));
   const resourceDir = path.join(workspace, "resources");
   await mkdir(path.join(resourceDir, "bin"), { recursive: true });
   await mkdir(path.join(resourceDir, "scripts"), { recursive: true });
@@ -153,7 +153,7 @@ exit 2
 });
 
 test("runs docx basic behavior smoke profile", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-helper-docx-behavior-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-helper-docx-behavior-"));
   const resourceDir = path.join(workspace, "resources");
   await mkdir(path.join(resourceDir, "bin"), { recursive: true });
   await mkdir(path.join(resourceDir, "scripts"), { recursive: true });
@@ -219,7 +219,7 @@ exit 2
 });
 
 test("runs img basic behavior smoke profile", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-helper-img-behavior-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-helper-img-behavior-"));
   const resourceDir = path.join(workspace, "resources");
   await mkdir(path.join(resourceDir, "bin"), { recursive: true });
   await mkdir(path.join(resourceDir, "scripts"), { recursive: true });
@@ -253,7 +253,7 @@ exit 2
 });
 
 test("runs markitdown basic behavior smoke profile", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-helper-markitdown-behavior-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-helper-markitdown-behavior-"));
   const resourceDir = path.join(workspace, "resources");
   await mkdir(path.join(resourceDir, "bin"), { recursive: true });
   await mkdir(path.join(resourceDir, "scripts"), { recursive: true });
@@ -293,7 +293,7 @@ exit 2
 });
 
 test("runs pdf basic behavior smoke profile", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-helper-pdf-behavior-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-helper-pdf-behavior-"));
   const resourceDir = path.join(workspace, "resources");
   await mkdir(path.join(resourceDir, "bin"), { recursive: true });
   await mkdir(path.join(resourceDir, "scripts"), { recursive: true });
@@ -333,7 +333,7 @@ exit 2
 });
 
 test("runs pptx basic behavior smoke profile", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-helper-pptx-behavior-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-helper-pptx-behavior-"));
   const resourceDir = path.join(workspace, "resources");
   await mkdir(path.join(resourceDir, "bin"), { recursive: true });
   await mkdir(path.join(resourceDir, "scripts"), { recursive: true });
@@ -371,7 +371,7 @@ exit 2
 });
 
 test("runs doc-diff basic behavior smoke profile", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-helper-doc-diff-behavior-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-helper-doc-diff-behavior-"));
   const resourceDir = path.join(workspace, "resources");
   await mkdir(path.join(resourceDir, "bin"), { recursive: true });
   await mkdir(path.join(resourceDir, "scripts"), { recursive: true });

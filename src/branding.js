@@ -2,7 +2,7 @@ export const BRANDING = {
   productName: "Peng",
   appName: "Peng",
   bundleIdentifier: "com.yaserxuanfrankfaraz.peng",
-  urlSchemes: ["peng", "yuumira", "craftagents"],
+  urlSchemes: ["peng", "craftagents"],
   craftName: "Craft Agents"
 };
 

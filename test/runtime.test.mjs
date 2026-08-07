@@ -31,7 +31,7 @@ import { createView, applyView, updateView } from "../src/views.js";
 import { discoverWorkflows } from "../src/workflows.js";
 
 test("runs a task and persists the thread", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const runtime = testRuntime(workspace);
 
   const result = await runtime.runTask({ prompt: "List workspace files" });
@@ -43,7 +43,7 @@ test("runs a task and persists the thread", async () => {
 
 test("keeps the system awake while configured runs are active and always releases", async () => {
   resetPowerState();
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const events = [];
   const runtime = createRuntime({
     workspace,
@@ -60,7 +60,7 @@ test("keeps the system awake while configured runs are active and always release
   assert.equal(events.some((event) => event.type === "power.prevent_sleep"), true);
   assert.equal(events.some((event) => event.type === "power.allow_sleep"), true);
 
-  const failingWorkspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const failingWorkspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const failing = createRuntime({
     workspace: failingWorkspace,
     store: new JsonStore({ workspace: failingWorkspace }),
@@ -78,7 +78,7 @@ test("keeps the system awake while configured runs are active and always release
 });
 
 test("memory tool stores searchable facts", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const runtime = testRuntime(workspace);
 
   await runtime.runTask({ prompt: "Remember that the app should support tool plugins" });
@@ -89,7 +89,7 @@ test("memory tool stores searchable facts", async () => {
 });
 
 test("stores citable JSONL memories with redaction and context rendering", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const workspaceRecord = await store.getWorkspace();
   const memory = createMemoryRecord({
@@ -112,7 +112,7 @@ test("stores citable JSONL memories with redaction and context rendering", async
 });
 
 test("extracts, maintains, renders, and counts memory citations", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const craftUserMemoriesDir = path.join(workspace, "home", ".craft-agent", "memories");
   const store = new JsonStore({ workspace, craftUserMemoriesDir });
   const workspaceRecord = await store.getWorkspace();
@@ -163,7 +163,7 @@ test("extracts, maintains, renders, and counts memory citations", async () => {
 });
 
 test("memory maintenance rate caps deferred removals", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   for (let index = 0; index < 5; index += 1) {
     await store.appendMemoryRecord(createMemoryRecord({
@@ -184,7 +184,7 @@ test("memory maintenance rate caps deferred removals", async () => {
 });
 
 test("indexes knowledge collections and searches documents", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const vault = path.join(workspace, "vault");
   await mkdir(vault, { recursive: true });
   await writeFile(path.join(vault, "agent-notes.md"), "# Agent Notes\n\nPrefer ripgrep for literal knowledge search.\n", "utf8");
@@ -234,7 +234,7 @@ test("indexes knowledge collections and searches documents", async () => {
 });
 
 test("workspace tools prevent path traversal", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const runtime = testRuntime(workspace);
 
   await assert.rejects(
@@ -300,7 +300,7 @@ test("evaluates safe-mode permission rules", () => {
 });
 
 test("discovers Craft-compatible skills", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const skillDir = path.join(workspace, ".craft-agent", "skills", "review");
   await mkdir(skillDir, { recursive: true });
   await writeFile(
@@ -327,7 +327,7 @@ Inspect behavior and tests.
 });
 
 test("discovers runnable workflow markdown", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const workflowDir = path.join(workspace, "workflow");
   await mkdir(workflowDir, { recursive: true });
   await writeFile(
@@ -370,7 +370,7 @@ test("validates observed default status configuration", () => {
 });
 
 test("creates, updates, defaults, and deletes custom statuses", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const runtime = testRuntime(workspace);
   let config = createStatus(DEFAULT_STATUS_CONFIG, { id: "blocked", label: "Blocked", color: "warning" });
   config = updateStatus(config, "blocked", { label: "Blocked Work", category: "open" });
@@ -424,7 +424,7 @@ test("parses and validates hierarchical labels", () => {
 });
 
 test("stores sessions and emits status/label domain events", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const workspaceRecord = await store.getWorkspace();
   const session = createSession({
@@ -454,7 +454,7 @@ test("stores sessions and emits status/label domain events", async () => {
 });
 
 test("runs prompt automations and records history", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const config = {
     version: 2,
@@ -491,7 +491,7 @@ test("runs prompt automations and records history", async () => {
 });
 
 test("builds webhook automation requests without exposing unrelated env", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const config = {
     version: 2,
@@ -529,7 +529,7 @@ test("builds webhook automation requests without exposing unrelated env", async 
 });
 
 test("executes webhook automations with response capture and rate limiting", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const config = {
     version: 2,
@@ -595,7 +595,7 @@ test("executes webhook automations with response capture and rate limiting", asy
 });
 
 test("runs scheduled automation ticks and exposes scheduler state", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   await store.saveAutomationConfig({
     version: 2,
@@ -629,7 +629,7 @@ test("runs scheduled automation ticks and exposes scheduler state", async () => 
 });
 
 test("discovers and validates source configs", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const sourceDir = path.join(workspace, ".craft-agent", "sources", "openai");
   await mkdir(sourceDir, { recursive: true });
   await writeFile(
@@ -664,7 +664,7 @@ test("discovers and validates source configs", async () => {
 });
 
 test("caches source icons and records icon metadata during source tests", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const vault = path.join(workspace, "vault");
   await mkdir(vault, { recursive: true });
   const sourceDir = path.join(workspace, ".craft-agent", "sources", "notes");
@@ -706,7 +706,7 @@ test("caches source icons and records icon metadata during source tests", async 
 });
 
 test("stores credential summaries, backs up unreadable files, and derives source auth state", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const record = await store.saveCredential(createCredentialRecord({
     sourceSlug: "openai",
@@ -728,7 +728,7 @@ test("stores credential summaries, backs up unreadable files, and derives source
 });
 
 test("stores credential secrets in an external backend when configured", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const backend = createFakeCredentialBackend();
   const store = new JsonStore({ workspace, credentialBackend: backend });
 
@@ -778,7 +778,7 @@ function createFakeCredentialBackend() {
 }
 
 test("computes restart signatures from source config and credentials without exposing secrets", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const source = {
     slug: "openai",
@@ -841,7 +841,7 @@ test("applies source auth modes without mutating secrets into summaries", () => 
 });
 
 test("tests API sources, persists status, and redacts request auth", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const sourceDir = path.join(workspace, ".craft-agent", "sources", "openai");
   await mkdir(sourceDir, { recursive: true });
   await writeFile(path.join(sourceDir, "config.json"), JSON.stringify({
@@ -877,7 +877,7 @@ test("tests API sources, persists status, and redacts request auth", async () =>
 });
 
 test("initializes stdio MCP sources and calls listed tools", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const sourceDir = path.join(workspace, ".craft-agent", "sources", "mock-mcp");
   await mkdir(sourceDir, { recursive: true });
   await writeFile(path.join(sourceDir, "config.json"), JSON.stringify({
@@ -919,7 +919,7 @@ test("initializes stdio MCP sources and calls listed tools", async () => {
 });
 
 test("initializes HTTP MCP sources with bearer credentials", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   await store.saveCredential(createCredentialRecord({ sourceSlug: "http-mcp", mode: "bearer", value: "http-secret" }));
   const source = {
@@ -971,7 +971,7 @@ test("initializes HTTP MCP sources with bearer credentials", async () => {
 });
 
 test("runs OAuth authorization, device, exchange, and refresh helpers", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const source = {
     id: "oauth_mcp_a1b2c3d4",
@@ -1084,7 +1084,7 @@ function oauthError(error) {
 }
 
 test("renews expiring bearer API credentials before source request", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const source = {
     slug: "refreshing",
@@ -1126,7 +1126,7 @@ test("renews expiring bearer API credentials before source request", async () =>
 });
 
 test("stores tasks, views, and search records", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const workspaceRecord = await store.getWorkspace();
   const project = createProject({ workspaceId: workspaceRecord.id, name: "Launch", root: workspace });
@@ -1213,10 +1213,10 @@ test("parses git status and history records", () => {
 });
 
 test("runs git status, history, diff, branch, and stash helpers", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-git-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-git-"));
   await gitExec(workspace, ["init"]);
-  await gitExec(workspace, ["config", "user.name", "YuuMira Test"]);
-  await gitExec(workspace, ["config", "user.email", "yuumira-test@example.invalid"]);
+  await gitExec(workspace, ["config", "user.name", "Peng Test"]);
+  await gitExec(workspace, ["config", "user.email", "peng-test@example.invalid"]);
   await writeFile(path.join(workspace, "note.txt"), "initial\n", "utf8");
 
   assert.equal((await gitStage({ cwd: workspace, pathspecs: ["note.txt"] })).ok, true);
@@ -1239,7 +1239,7 @@ test("runs git status, history, diff, branch, and stash helpers", async () => {
 });
 
 test("stores terminal history and resolves tool icons", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const workspaceRecord = await store.getWorkspace();
   const record = createTerminalRecord({
@@ -1297,7 +1297,7 @@ test("stores terminal history and resolves tool icons", async () => {
   const helperProfiles = await runtime.tools.run("helpers.smoke_profiles", {}, { store: runtime.store });
   const helperBehaviorProfiles = await runtime.tools.run("helpers.behavior_profiles", {}, { store: runtime.store });
   const helperSmoke = await runtime.tools.run("helpers.smoke", { names: ["docx-tool"], profile: "help", timeoutMs: 1 }, { store: runtime.store });
-  const bundleAudit = await runtime.tools.run("audit.bundle", { appPath: "/missing/YuuMira.app" }, { store: runtime.store });
+  const bundleAudit = await runtime.tools.run("audit.bundle", { appPath: "/missing/Peng.app" }, { store: runtime.store });
   const providerRequest = await runtime.tools.run("provider.model_request", {
     provider: { id: "ollama", type: "openai-compatible", baseUrl: "http://127.0.0.1:11434/v1" },
     useOllamaTags: true
@@ -1327,7 +1327,7 @@ test("stores terminal history and resolves tool icons", async () => {
 });
 
 test("records terminal chunks and replays terminal events", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const workspaceRecord = await store.getWorkspace();
   let record = createTerminalRecord({
@@ -1351,7 +1351,7 @@ test("records terminal chunks and replays terminal events", async () => {
 });
 
 test("runs terminal commands and captures stdout and stderr", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const workspaceRecord = await store.getWorkspace();
   const command = `${JSON.stringify(process.execPath)} -e ${JSON.stringify("console.log('hello'); console.error('warn')")}`;
@@ -1373,7 +1373,7 @@ test("runs terminal commands and captures stdout and stderr", async () => {
 });
 
 test("starts and cancels managed terminal processes", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const workspaceRecord = await store.getWorkspace();
   const manager = new TerminalProcessManager({
@@ -1394,7 +1394,7 @@ test("starts and cancels managed terminal processes", async () => {
 });
 
 test("writes input to managed terminal processes", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const workspaceRecord = await store.getWorkspace();
   const manager = new TerminalProcessManager({
@@ -1414,7 +1414,7 @@ test("writes input to managed terminal processes", async () => {
 });
 
 test("records terminal resize dimensions", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   const workspaceRecord = await store.getWorkspace();
   const manager = new TerminalProcessManager({
@@ -1442,7 +1442,7 @@ test("records terminal resize dimensions", async () => {
 });
 
 test("knowledge tools create, index, report, and search", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const vault = path.join(workspace, "vault");
   await mkdir(vault, { recursive: true });
   await writeFile(path.join(vault, "qmd.md"), "# QMD\n\nSemantic search can be unavailable while literal search works.\n", "utf8");
@@ -1472,7 +1472,7 @@ test("knowledge tools create, index, report, and search", async () => {
 });
 
 test("runtime injects memory context only when requested", async () => {
-  const workspace = await mkdtemp(path.join(tmpdir(), "yuumira-test-"));
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-test-"));
   const store = new JsonStore({ workspace });
   await store.appendMemoryRecord(createMemoryRecord({ text: "Use compact implementation notes." }));
   const systems = [];

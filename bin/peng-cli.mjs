@@ -26,7 +26,7 @@ import { createMemoryRecord, extractMemoryCandidates, parseMemoryCitations, rend
 import { renderProtocolEvent } from "../src/protocol.js";
 import { listToolIcons, resolveToolIcon, resourceManifest } from "../src/resources.js";
 import { listHelpers, listHelperBehaviorProfiles, listHelperSmokeProfiles, planHelperCommand, runHelperCommand, runHelperBehaviorProfile, smokeHelpers } from "../src/helpers.js";
-import { auditYuuMiraBundle } from "../src/bundle-audit.js";
+import { auditPengBundle } from "../src/app-audit.js";
 import { cleanFinderDuplicateVariants } from "../src/resource-import.js";
 import { allowSleep, powerState, preventSleep } from "../src/power.js";
 
@@ -45,7 +45,7 @@ try {
     printHelp();
   } else if (command === "run") {
     const prompt = args.join(" ").trim();
-    if (!prompt) throw new Error("Missing prompt. Usage: yuumira run <prompt>");
+    if (!prompt) throw new Error("Missing prompt. Usage: peng run <prompt>");
     const result = await runtime.runTask({ prompt });
     printRunResult(result);
   } else if (command === "threads") {
@@ -59,7 +59,7 @@ try {
     }
   } else if (command === "show") {
     const threadId = args[0];
-    if (!threadId) throw new Error("Missing thread id. Usage: yuumira show <thread-id>");
+    if (!threadId) throw new Error("Missing thread id. Usage: peng show <thread-id>");
     const thread = await runtime.getThread(threadId);
     for (const event of thread.events) {
       console.log(`[${event.role}] ${event.content}`);
@@ -106,7 +106,7 @@ try {
       console.log(JSON.stringify(validatePermissionRules(DEFAULT_PERMISSION_RULES), null, 2));
     } else if (subcommand === "check") {
       const value = positionalBeforeFlags(args.slice(1)).join(" ").trim() || readFlag(args, "--value") || readFlag(args, "--path");
-      if (!value) throw new Error("Missing command. Usage: yuumira permissions check <bash-command>");
+      if (!value) throw new Error("Missing command. Usage: peng permissions check <bash-command>");
       console.log(JSON.stringify(evaluatePermission({
         mode: readFlag(args, "--mode") ?? "safe",
         kind: readFlag(args, "--kind") ?? "bash",
@@ -158,7 +158,7 @@ try {
       console.log(`${id}\tcreated`);
     } else if (subcommand === "update") {
       const id = args[1];
-      if (!id) throw new Error("Usage: yuumira statuses update <id> [--label <label>] [--category open|closed] [--color <color>] [--default]");
+      if (!id) throw new Error("Usage: peng statuses update <id> [--label <label>] [--category open|closed] [--color <color>] [--default]");
       const next = updateStatus(config, id, {
         id: readFlag(args, "--id"),
         label: readFlag(args, "--label"),
@@ -170,13 +170,13 @@ try {
       console.log(`${id}\tupdated`);
     } else if (subcommand === "default") {
       const id = args[1];
-      if (!id) throw new Error("Usage: yuumira statuses default <id>");
+      if (!id) throw new Error("Usage: peng statuses default <id>");
       const next = setDefaultStatus(config, id);
       await runtime.store.saveStatusConfig(next);
       console.log(`${id}\tdefault`);
     } else if (subcommand === "delete") {
       const id = args[1];
-      if (!id) throw new Error("Usage: yuumira statuses delete <id> [--replacement <id>]");
+      if (!id) throw new Error("Usage: peng statuses delete <id> [--replacement <id>]");
       const deleted = deleteStatus(config, id, { replacementStatusId: readFlag(args, "--replacement") ?? config.defaultStatusId });
       await runtime.store.saveStatusConfig(deleted.config);
       const migrated = await migrateStatusReferences(runtime.store, id, deleted.replacementStatusId);
@@ -216,7 +216,7 @@ try {
       console.log(`${id}\tcreated`);
     } else if (subcommand === "update") {
       const id = args[1];
-      if (!id) throw new Error("Usage: yuumira labels update <id> [--id <id>] [--name <name>] [--color <color>] [--value-type <type>] [--parent <id>]");
+      if (!id) throw new Error("Usage: peng labels update <id> [--id <id>] [--name <name>] [--color <color>] [--value-type <type>] [--parent <id>]");
       const nextId = readFlag(args, "--id");
       const next = updateLabel(config, id, {
         id: nextId,
@@ -230,7 +230,7 @@ try {
       console.log(`${id}\tupdated\t${migrated.sessions}/${migrated.tasks}`);
     } else if (subcommand === "delete") {
       const id = args[1];
-      if (!id) throw new Error("Usage: yuumira labels delete <id>");
+      if (!id) throw new Error("Usage: peng labels delete <id>");
       const deleted = deleteLabel(config, id);
       await runtime.store.saveLabelConfig(deleted.config);
       const migrated = await removeLabelReferences(runtime.store, deleted.removed);
@@ -248,7 +248,7 @@ try {
     await handleViews(args);
   } else if (command === "search") {
     const query = args.join(" ").trim();
-    if (!query) throw new Error("Usage: yuumira search <query>");
+    if (!query) throw new Error("Usage: peng search <query>");
     const results = await searchWorkspace({ store: runtime.store, query });
     for (const result of results) {
       console.log(`${result.type}\t${result.id}\t${result.title}`);
@@ -271,7 +271,7 @@ try {
     await handleResources(args);
   } else if (command === "audit") {
     await cleanFinderDuplicateVariants(readFlag(args, "--resources") ?? "resources");
-    const result = auditYuuMiraBundle({
+    const result = auditPengBundle({
       appPath: readFlag(args, "--app") ?? undefined,
       workspace,
       resourceDir: readFlag(args, "--resources") ?? undefined
@@ -306,17 +306,17 @@ try {
     } else if (subcommand === "auth-help") {
       const slug = args[1];
       const source = sources.find((item) => item.slug === slug);
-      if (!source) throw new Error("Usage: yuumira sources auth-help <slug>");
+      if (!source) throw new Error("Usage: peng sources auth-help <slug>");
       console.log(JSON.stringify(credentialPromptSpec(source), null, 2));
     } else if (subcommand === "auth-state") {
       const slug = args[1];
       const source = sources.find((item) => item.slug === slug);
-      if (!source) throw new Error("Usage: yuumira sources auth-state <slug>");
+      if (!source) throw new Error("Usage: peng sources auth-state <slug>");
       console.log(JSON.stringify(sourceAuthState(source, await runtime.store.getCredential(source.slug)), null, 2));
     } else if (subcommand === "auth-save") {
       const [slug, json = "{}"] = args.slice(1);
       const source = sources.find((item) => item.slug === slug);
-      if (!source) throw new Error("Usage: yuumira sources auth-save <slug> <fields-json>");
+      if (!source) throw new Error("Usage: peng sources auth-save <slug> <fields-json>");
       const record = await runtime.store.saveCredential(credentialFromPromptInput(source, {
         fields: JSON.parse(json),
         refreshToken: readFlag(args, "--refresh-token"),
@@ -326,37 +326,37 @@ try {
     } else if (subcommand === "signature") {
       const slug = args[1];
       const source = sources.find((item) => item.slug === slug);
-      if (!source) throw new Error("Usage: yuumira sources signature <slug>");
+      if (!source) throw new Error("Usage: peng sources signature <slug>");
       console.log(JSON.stringify(await getSourceRuntimeSignature({ source, store: runtime.store }), null, 2));
     } else if (subcommand === "test") {
       const slug = args[1];
       const source = sources.find((item) => item.slug === slug);
-      if (!source) throw new Error("Usage: yuumira sources test <slug>");
+      if (!source) throw new Error("Usage: peng sources test <slug>");
       console.log(JSON.stringify(await testSource({ source, store: runtime.store }), null, 2));
     } else if (subcommand === "icon") {
       const slug = args[1];
       const source = sources.find((item) => item.slug === slug);
-      if (!source) throw new Error("Usage: yuumira sources icon <slug>");
+      if (!source) throw new Error("Usage: peng sources icon <slug>");
       console.log(JSON.stringify(await cacheSourceIcon({ source }), null, 2));
     } else if (subcommand === "request") {
       const [slug, endpointPath] = args.slice(1);
       const source = sources.find((item) => item.slug === slug);
-      if (!source || !endpointPath) throw new Error("Usage: yuumira sources request <slug> <path>");
+      if (!source || !endpointPath) throw new Error("Usage: peng sources request <slug> <path>");
       console.log(JSON.stringify(await executeApiSourceRequest({ source, endpointPath, store: runtime.store }), null, 2));
     } else if (subcommand === "mcp-tools") {
       const slug = args[1];
       const source = sources.find((item) => item.slug === slug);
-      if (!source) throw new Error("Usage: yuumira sources mcp-tools <slug>");
+      if (!source) throw new Error("Usage: peng sources mcp-tools <slug>");
       console.log(JSON.stringify(await listMcpSourceTools({ source, store: runtime.store }), null, 2));
     } else if (subcommand === "mcp-call") {
       const [slug, name, json = "{}"] = args.slice(1);
       const source = sources.find((item) => item.slug === slug);
-      if (!source || !name) throw new Error("Usage: yuumira sources mcp-call <slug> <tool-name> [arguments-json]");
+      if (!source || !name) throw new Error("Usage: peng sources mcp-call <slug> <tool-name> [arguments-json]");
       console.log(JSON.stringify(await callMcpSourceTool({ source, name, arguments: JSON.parse(json), store: runtime.store }), null, 2));
     } else if (subcommand === "oauth-url") {
       const slug = args[1];
       const source = sources.find((item) => item.slug === slug);
-      if (!source) throw new Error("Usage: yuumira sources oauth-url <slug>");
+      if (!source) throw new Error("Usage: peng sources oauth-url <slug>");
       const request = createSourceOAuthAuthorizationRequest({
         source,
         state: readFlag(args, "--state"),
@@ -370,12 +370,12 @@ try {
     } else if (subcommand === "oauth-device") {
       const slug = args[1];
       const source = sources.find((item) => item.slug === slug);
-      if (!source) throw new Error("Usage: yuumira sources oauth-device <slug>");
+      if (!source) throw new Error("Usage: peng sources oauth-device <slug>");
       console.log(JSON.stringify(await startSourceOAuthDeviceFlow({ source }), null, 2));
     } else if (subcommand === "oauth-callback") {
       const slug = args[1];
       const source = sources.find((item) => item.slug === slug);
-      if (!source) throw new Error("Usage: yuumira sources oauth-callback <slug> [--port <port>] [--state <state>] [--challenge <challenge>] [--verifier <verifier>] [--no-open] [--no-pkce]");
+      if (!source) throw new Error("Usage: peng sources oauth-callback <slug> [--port <port>] [--state <state>] [--challenge <challenge>] [--verifier <verifier>] [--no-open] [--no-pkce]");
       const state = readFlag(args, "--state") ?? generateOAuthState();
       const generatedPkce = generateOAuthPkcePair();
       const pkce = hasFlag(args, "--no-pkce")
@@ -417,7 +417,7 @@ try {
     } else if (subcommand === "oauth-exchange") {
       const slug = args[1];
       const source = sources.find((item) => item.slug === slug);
-      if (!source) throw new Error("Usage: yuumira sources oauth-exchange <slug> (--code <code>|--device-code <code>)");
+      if (!source) throw new Error("Usage: peng sources oauth-exchange <slug> (--code <code>|--device-code <code>)");
       const deviceCode = readFlag(args, "--device-code");
       const credential = deviceCode
         ? await exchangeSourceOAuthDeviceCode({ source, deviceCode, store: runtime.store })
@@ -426,7 +426,7 @@ try {
     } else if (subcommand === "oauth-poll-device") {
       const [slug, deviceCode] = args.slice(1);
       const source = sources.find((item) => item.slug === slug);
-      if (!source || !deviceCode) throw new Error("Usage: yuumira sources oauth-poll-device <slug> <device-code>");
+      if (!source || !deviceCode) throw new Error("Usage: peng sources oauth-poll-device <slug> <device-code>");
       const credential = await pollSourceOAuthDeviceCode({
         source,
         deviceCode,
@@ -439,7 +439,7 @@ try {
     } else if (subcommand === "oauth-refresh") {
       const slug = args[1];
       const source = sources.find((item) => item.slug === slug);
-      if (!source) throw new Error("Usage: yuumira sources oauth-refresh <slug>");
+      if (!source) throw new Error("Usage: peng sources oauth-refresh <slug>");
       const credential = await refreshSourceOAuthCredential({ source, store: runtime.store });
       console.log(`${credential.sourceSlug}\t${credential.mode}\trefreshed`);
     } else {
@@ -456,124 +456,124 @@ try {
 }
 
 function printHelp() {
-  console.log(`yuumira-cleanroom
+  console.log(`peng
 
 Usage:
-  yuumira run <prompt>       Run a task in a new thread
-  yuumira threads            List saved threads
-  yuumira show <thread-id>   Show a thread transcript
-  yuumira config             Print merged app defaults
-  yuumira power [state|prevent-sleep|allow-sleep]
-  yuumira provider           Print active model provider
-  yuumira provider list      List built-in provider profiles
-  yuumira provider model-request [profile] [--base-url <url>] [--api-key <key>] [--ollama-tags]
-  yuumira provider models [profile] [--api-key <key>] [--ollama-tags] [--timeout-ms <ms>]
-  yuumira protocol [--thread <id>] [--type <event-type>]
-  yuumira queue list [--thread <id>] [--status <status>]
-  yuumira queue add <thread-id> <message>
-  yuumira queue replay <thread-id>
-  yuumira run-control list [--status <status>]
-  yuumira run-control stop <thread-id> [reason]
-  yuumira run-control resume <thread-id> [prompt]
-  yuumira run-control watchdog [stale-after-ms]
-  yuumira permissions        Validate default permission rules
-  yuumira permissions check <value> [--kind bash|api|mcp|tool|write]
-  yuumira skills             List Craft-compatible skills
-  yuumira workflows          List workflow markdown files
-  yuumira statuses           List workspace statuses
-  yuumira statuses create <id> <label>
-  yuumira statuses update <id> [--label <label>]
-  yuumira statuses default <id>
-  yuumira statuses delete <id> [--replacement <id>]
-  yuumira labels             List workspace labels
-  yuumira labels create <id> <name>
-  yuumira labels update <id> [--name <name>]
-  yuumira labels delete <id>
-  yuumira sessions           List workspace sessions
-  yuumira sessions create <prompt>
-  yuumira sessions status <session-id> <status-id>
-  yuumira sessions label <session-id> <label>
-  yuumira projects
-  yuumira projects create <name>
-  yuumira projects update <project-id> [--name <name>]
-  yuumira projects delete <project-id>
-  yuumira tasks
-  yuumira tasks create <title>
-  yuumira tasks update <task-id> [--title <title>]
-  yuumira tasks status <task-id> <status-id>
-  yuumira tasks delete <task-id>
-  yuumira views
-  yuumira views create <name> [sessions|tasks]
-  yuumira views update <view-id> [--filters <json>]
-  yuumira views delete <view-id>
-  yuumira search <query>
-  yuumira automations validate
-  yuumira automations lint
-  yuumira automations test '<event-json>'
-  yuumira automations run '<event-json>' [--execute-webhooks]
-  yuumira automations tick [--now <iso-date>] [--execute-webhooks]
-  yuumira automations history
-  yuumira memory
-  yuumira memory remember <text>
-  yuumira memory search <query>
-  yuumira memory context <query>
-  yuumira memory citations <text>
-  yuumira memory extract <text> [--persist]
-  yuumira memory maintain [--max <n>] [--max-removed <n>] [--max-removed-ratio <0-1>] [--scan-citations] [--user-compat] [--no-compat]
-  yuumira knowledge
-  yuumira knowledge create <name> <root>
-  yuumira knowledge index <collection-id>
-  yuumira knowledge search <query>
-  yuumira knowledge inspect
-  yuumira knowledge repair
-  yuumira knowledge report
-  yuumira knowledge semantic
-  yuumira knowledge semantic-configure [--model <name>] [--cache-dir <path>] [--installed]
-  yuumira knowledge semantic-job [--collection <id>] [--model <name>] [--cache-dir <path>]
-  yuumira credentials
-  yuumira credentials storage
-  yuumira credentials save <source-slug> <mode> <value>
-  yuumira terminal
-  yuumira terminal run <command>
-  yuumira terminal record <command> [exit-code]
-  yuumira terminal append <record-id> <stdout|stderr> <text>
-  yuumira terminal finish <record-id> [exit-code]
-  yuumira terminal replay <record-id>
-  yuumira terminal sessions
-  yuumira terminal session-create [name]
-  yuumira terminal session-attach <session-id> <record-id>
-  yuumira terminal session-close <session-id>
-  yuumira git parse-status '<status-output>'
-  yuumira git parse-log '<pretty-log-output>'
-  yuumira git log-format
-  yuumira tool-icons [command]
-  yuumira resources
-  yuumira helpers
-  yuumira audit [--app /Applications/YuuMira.app] [--resources resources] [--json]
-  yuumira helpers smoke-profiles
-  yuumira helpers behavior-profiles
-  yuumira helpers plan <name> [args...]
-  yuumira helpers run <name> [args...] [--json] [--timeout-ms <ms>]
-  yuumira helpers smoke [name...] [--profile help] [--json] [--timeout-ms <ms>]
-  yuumira helpers behavior-smoke [--profile ical-basic|xlsx-basic|docx-basic|img-basic|markitdown-basic|pdf-basic|pptx-basic|doc-diff-basic] [--json] [--timeout-ms <ms>]
-  yuumira sources            List workspace sources
-  yuumira sources validate
-  yuumira sources auth-help <slug>
-  yuumira sources auth-state <slug>
-  yuumira sources auth-save <slug> <fields-json>
-  yuumira sources signature <slug>
-  yuumira sources test <slug>
-  yuumira sources icon <slug>
-  yuumira sources request <slug> <path>
-  yuumira sources mcp-tools <slug>
-  yuumira sources mcp-call <slug> <tool-name> [arguments-json]
-  yuumira sources oauth-url <slug> [--state <state>] [--generate-state] [--challenge <challenge>] [--pkce] [--json]
-  yuumira sources oauth-device <slug>
-  yuumira sources oauth-callback <slug> [--port <port>] [--state <state>] [--no-open] [--no-pkce]
-  yuumira sources oauth-exchange <slug> (--code <code>|--device-code <code>)
-  yuumira sources oauth-poll-device <slug> <device-code>
-  yuumira sources oauth-refresh <slug>
-  yuumira server [--host 127.0.0.1] [--port 4721] [--workspace <path>] [--json]
+  peng run <prompt>       Run a task in a new thread
+  peng threads            List saved threads
+  peng show <thread-id>   Show a thread transcript
+  peng config             Print merged app defaults
+  peng power [state|prevent-sleep|allow-sleep]
+  peng provider           Print active model provider
+  peng provider list      List built-in provider profiles
+  peng provider model-request [profile] [--base-url <url>] [--api-key <key>] [--ollama-tags]
+  peng provider models [profile] [--api-key <key>] [--ollama-tags] [--timeout-ms <ms>]
+  peng protocol [--thread <id>] [--type <event-type>]
+  peng queue list [--thread <id>] [--status <status>]
+  peng queue add <thread-id> <message>
+  peng queue replay <thread-id>
+  peng run-control list [--status <status>]
+  peng run-control stop <thread-id> [reason]
+  peng run-control resume <thread-id> [prompt]
+  peng run-control watchdog [stale-after-ms]
+  peng permissions        Validate default permission rules
+  peng permissions check <value> [--kind bash|api|mcp|tool|write]
+  peng skills             List Craft-compatible skills
+  peng workflows          List workflow markdown files
+  peng statuses           List workspace statuses
+  peng statuses create <id> <label>
+  peng statuses update <id> [--label <label>]
+  peng statuses default <id>
+  peng statuses delete <id> [--replacement <id>]
+  peng labels             List workspace labels
+  peng labels create <id> <name>
+  peng labels update <id> [--name <name>]
+  peng labels delete <id>
+  peng sessions           List workspace sessions
+  peng sessions create <prompt>
+  peng sessions status <session-id> <status-id>
+  peng sessions label <session-id> <label>
+  peng projects
+  peng projects create <name>
+  peng projects update <project-id> [--name <name>]
+  peng projects delete <project-id>
+  peng tasks
+  peng tasks create <title>
+  peng tasks update <task-id> [--title <title>]
+  peng tasks status <task-id> <status-id>
+  peng tasks delete <task-id>
+  peng views
+  peng views create <name> [sessions|tasks]
+  peng views update <view-id> [--filters <json>]
+  peng views delete <view-id>
+  peng search <query>
+  peng automations validate
+  peng automations lint
+  peng automations test '<event-json>'
+  peng automations run '<event-json>' [--execute-webhooks]
+  peng automations tick [--now <iso-date>] [--execute-webhooks]
+  peng automations history
+  peng memory
+  peng memory remember <text>
+  peng memory search <query>
+  peng memory context <query>
+  peng memory citations <text>
+  peng memory extract <text> [--persist]
+  peng memory maintain [--max <n>] [--max-removed <n>] [--max-removed-ratio <0-1>] [--scan-citations] [--user-compat] [--no-compat]
+  peng knowledge
+  peng knowledge create <name> <root>
+  peng knowledge index <collection-id>
+  peng knowledge search <query>
+  peng knowledge inspect
+  peng knowledge repair
+  peng knowledge report
+  peng knowledge semantic
+  peng knowledge semantic-configure [--model <name>] [--cache-dir <path>] [--installed]
+  peng knowledge semantic-job [--collection <id>] [--model <name>] [--cache-dir <path>]
+  peng credentials
+  peng credentials storage
+  peng credentials save <source-slug> <mode> <value>
+  peng terminal
+  peng terminal run <command>
+  peng terminal record <command> [exit-code]
+  peng terminal append <record-id> <stdout|stderr> <text>
+  peng terminal finish <record-id> [exit-code]
+  peng terminal replay <record-id>
+  peng terminal sessions
+  peng terminal session-create [name]
+  peng terminal session-attach <session-id> <record-id>
+  peng terminal session-close <session-id>
+  peng git parse-status '<status-output>'
+  peng git parse-log '<pretty-log-output>'
+  peng git log-format
+  peng tool-icons [command]
+  peng resources
+  peng helpers
+  peng audit [--app dist/Peng.app] [--resources resources] [--json]
+  peng helpers smoke-profiles
+  peng helpers behavior-profiles
+  peng helpers plan <name> [args...]
+  peng helpers run <name> [args...] [--json] [--timeout-ms <ms>]
+  peng helpers smoke [name...] [--profile help] [--json] [--timeout-ms <ms>]
+  peng helpers behavior-smoke [--profile ical-basic|xlsx-basic|docx-basic|img-basic|markitdown-basic|pdf-basic|pptx-basic|doc-diff-basic] [--json] [--timeout-ms <ms>]
+  peng sources            List workspace sources
+  peng sources validate
+  peng sources auth-help <slug>
+  peng sources auth-state <slug>
+  peng sources auth-save <slug> <fields-json>
+  peng sources signature <slug>
+  peng sources test <slug>
+  peng sources icon <slug>
+  peng sources request <slug> <path>
+  peng sources mcp-tools <slug>
+  peng sources mcp-call <slug> <tool-name> [arguments-json]
+  peng sources oauth-url <slug> [--state <state>] [--generate-state] [--challenge <challenge>] [--pkce] [--json]
+  peng sources oauth-device <slug>
+  peng sources oauth-callback <slug> [--port <port>] [--state <state>] [--no-open] [--no-pkce]
+  peng sources oauth-exchange <slug> (--code <code>|--device-code <code>)
+  peng sources oauth-poll-device <slug> <device-code>
+  peng sources oauth-refresh <slug>
+  peng server [--host 127.0.0.1] [--port 4721] [--workspace <path>] [--json]
 `);
 }
 
@@ -604,7 +604,7 @@ async function handleQueue(args) {
   if (subcommand === "add") {
     const [threadId, ...contentParts] = args.slice(1);
     const content = contentParts.join(" ").trim();
-    if (!threadId || !content) throw new Error("Usage: yuumira queue add <thread-id> <message>");
+    if (!threadId || !content) throw new Error("Usage: peng queue add <thread-id> <message>");
     const message = await runtime.queueThreadMessage({ threadId, content, source: "cli" });
     console.log(`${message.id}\t${message.threadId}\t${message.status}\t${message.content}`);
     return;
@@ -612,7 +612,7 @@ async function handleQueue(args) {
 
   if (subcommand === "replay") {
     const threadId = args[1];
-    if (!threadId) throw new Error("Usage: yuumira queue replay <thread-id>");
+    if (!threadId) throw new Error("Usage: peng queue replay <thread-id>");
     const replayed = await runtime.replayQueuedMessages({ threadId });
     if (replayed.length === 0) {
       console.log("No queued messages replayed.");
@@ -641,7 +641,7 @@ async function handleRunControl(args) {
 
   if (subcommand === "stop") {
     const [threadId, ...reasonParts] = args.slice(1);
-    if (!threadId) throw new Error("Usage: yuumira run-control stop <thread-id> [reason]");
+    if (!threadId) throw new Error("Usage: peng run-control stop <thread-id> [reason]");
     const control = await runtime.requestStop({ threadId, reason: reasonParts.join(" ").trim() || "cli_requested" });
     console.log(`${control.threadId}\t${control.status}\t${control.reason}`);
     return;
@@ -649,7 +649,7 @@ async function handleRunControl(args) {
 
   if (subcommand === "resume") {
     const [threadId, ...promptParts] = args.slice(1);
-    if (!threadId) throw new Error("Usage: yuumira run-control resume <thread-id> [prompt]");
+    if (!threadId) throw new Error("Usage: peng run-control resume <thread-id> [prompt]");
     const result = await runtime.resumeThread({ threadId, prompt: promptParts.join(" ").trim() || "Resume the stopped thread." });
     printRunResult(result);
     return;
@@ -703,7 +703,7 @@ async function handleSessions(args) {
 
   if (subcommand === "create") {
     const prompt = args.slice(1).join(" ").trim();
-    if (!prompt) throw new Error("Missing prompt. Usage: yuumira sessions create <prompt>");
+    if (!prompt) throw new Error("Missing prompt. Usage: peng sessions create <prompt>");
     const workspaceRecord = await runtime.store.getWorkspace();
     const session = createSession({
       workspaceId: workspaceRecord.id,
@@ -719,7 +719,7 @@ async function handleSessions(args) {
   if (subcommand === "status") {
     const [sessionId, statusId] = args.slice(1);
     if (!sessionId || !statusId) {
-      throw new Error("Usage: yuumira sessions status <session-id> <status-id>");
+      throw new Error("Usage: peng sessions status <session-id> <status-id>");
     }
     const current = await runtime.store.getSession(sessionId);
     const { session, event } = updateSessionStatus(current, statusId, await runtime.store.getStatusConfig());
@@ -731,7 +731,7 @@ async function handleSessions(args) {
 
   if (subcommand === "label") {
     const [sessionId, label] = args.slice(1);
-    if (!sessionId || !label) throw new Error("Usage: yuumira sessions label <session-id> <label>");
+    if (!sessionId || !label) throw new Error("Usage: peng sessions label <session-id> <label>");
     const current = await runtime.store.getSession(sessionId);
     const { session, event } = addSessionLabel(current, label);
     await runtime.store.saveSession(session);
@@ -756,7 +756,7 @@ async function handleProjects(args) {
   }
   if (subcommand === "create") {
     const name = args.slice(1).join(" ").trim();
-    if (!name) throw new Error("Usage: yuumira projects create <name>");
+    if (!name) throw new Error("Usage: peng projects create <name>");
     const workspaceRecord = await runtime.store.getWorkspace();
     const project = createProject({ workspaceId: workspaceRecord.id, name, root: workspace });
     await runtime.store.saveProject(project);
@@ -765,7 +765,7 @@ async function handleProjects(args) {
   }
   if (subcommand === "update") {
     const projectId = args[1];
-    if (!projectId) throw new Error("Usage: yuumira projects update <project-id> [--name <name>] [--root <path>]");
+    if (!projectId) throw new Error("Usage: peng projects update <project-id> [--name <name>] [--root <path>]");
     const project = updateProject(await runtime.store.getProject(projectId), {
       name: readOptionalFlag(args, "--name"),
       root: readOptionalFlag(args, "--root")
@@ -776,7 +776,7 @@ async function handleProjects(args) {
   }
   if (subcommand === "delete") {
     const projectId = args[1];
-    if (!projectId) throw new Error("Usage: yuumira projects delete <project-id>");
+    if (!projectId) throw new Error("Usage: peng projects delete <project-id>");
     const project = await runtime.store.getProject(projectId);
     await runtime.store.deleteProject(projectId);
     const detached = await detachProjectReferences(runtime.store, projectId);
@@ -806,7 +806,7 @@ async function handleTasks(args) {
   }
   if (subcommand === "create") {
     const title = positionalBeforeFlags(args.slice(1)).join(" ").trim();
-    if (!title) throw new Error("Usage: yuumira tasks create <title>");
+    if (!title) throw new Error("Usage: peng tasks create <title>");
     const workspaceRecord = await runtime.store.getWorkspace();
     const task = createTask({
       workspaceId: workspaceRecord.id,
@@ -825,7 +825,7 @@ async function handleTasks(args) {
   }
   if (subcommand === "status") {
     const [taskId, statusId] = args.slice(1);
-    if (!taskId || !statusId) throw new Error("Usage: yuumira tasks status <task-id> <status-id>");
+    if (!taskId || !statusId) throw new Error("Usage: peng tasks status <task-id> <status-id>");
     const task = updateTaskStatus(await runtime.store.getTask(taskId), statusId, await runtime.store.getStatusConfig());
     await runtime.store.saveTask(task);
     console.log(`${task.id}\t${task.statusId}\t${task.title}`);
@@ -833,7 +833,7 @@ async function handleTasks(args) {
   }
   if (subcommand === "update") {
     const taskId = args[1];
-    if (!taskId) throw new Error("Usage: yuumira tasks update <task-id> [--title <title>] [--status <id>] [--project <id>] [--labels <a,b>]");
+    if (!taskId) throw new Error("Usage: peng tasks update <task-id> [--title <title>] [--status <id>] [--project <id>] [--labels <a,b>]");
     const task = updateTask(await runtime.store.getTask(taskId), {
       title: readOptionalFlag(args, "--title"),
       description: readOptionalFlag(args, "--description"),
@@ -850,7 +850,7 @@ async function handleTasks(args) {
   }
   if (subcommand === "delete") {
     const taskId = args[1];
-    if (!taskId) throw new Error("Usage: yuumira tasks delete <task-id>");
+    if (!taskId) throw new Error("Usage: peng tasks delete <task-id>");
     const task = await runtime.store.getTask(taskId);
     await runtime.store.deleteTask(taskId);
     console.log(`${task.id}\tdeleted`);
@@ -873,7 +873,7 @@ async function handleViews(args) {
   if (subcommand === "create") {
     const name = args[1];
     const entity = args[2] || "sessions";
-    if (!name) throw new Error("Usage: yuumira views create <name> [sessions|tasks]");
+    if (!name) throw new Error("Usage: peng views create <name> [sessions|tasks]");
     const workspaceRecord = await runtime.store.getWorkspace();
     const view = createView({
       workspaceId: workspaceRecord.id,
@@ -888,7 +888,7 @@ async function handleViews(args) {
   }
   if (subcommand === "update") {
     const viewId = args[1];
-    if (!viewId) throw new Error("Usage: yuumira views update <view-id> [--name <name>] [--entity <entity>] [--filters <json>] [--sort <field:dir>]");
+    if (!viewId) throw new Error("Usage: peng views update <view-id> [--name <name>] [--entity <entity>] [--filters <json>] [--sort <field:dir>]");
     const view = updateView(await runtime.store.getView(viewId), {
       name: readOptionalFlag(args, "--name"),
       entity: readOptionalFlag(args, "--entity"),
@@ -901,7 +901,7 @@ async function handleViews(args) {
   }
   if (subcommand === "delete") {
     const viewId = args[1];
-    if (!viewId) throw new Error("Usage: yuumira views delete <view-id>");
+    if (!viewId) throw new Error("Usage: peng views delete <view-id>");
     const view = await runtime.store.getView(viewId);
     await runtime.store.deleteView(viewId);
     console.log(`${view.id}\tdeleted`);
@@ -924,7 +924,7 @@ async function handleAutomations(args) {
 
   if (subcommand === "test" || subcommand === "run") {
     const json = positionalBeforeFlags(args.slice(1)).join(" ").trim();
-    if (!json) throw new Error(`Usage: yuumira automations ${subcommand} '<event-json>'`);
+    if (!json) throw new Error(`Usage: peng automations ${subcommand} '<event-json>'`);
     const event = JSON.parse(json);
     const result = await runAutomations({
       config: await runtime.store.getAutomationConfig(),
@@ -975,7 +975,7 @@ async function handleMemory(args) {
   }
   if (subcommand === "remember") {
     const text = args.slice(1).join(" ").trim();
-    if (!text) throw new Error("Usage: yuumira memory remember <text>");
+    if (!text) throw new Error("Usage: peng memory remember <text>");
     const workspaceRecord = await runtime.store.getWorkspace();
     const record = createMemoryRecord({ text, workspaceId: workspaceRecord.id });
     await runtime.store.appendMemoryRecord(record);
@@ -995,7 +995,7 @@ async function handleMemory(args) {
   }
   if (subcommand === "citations") {
     const text = args.slice(1).join(" ").trim();
-    if (!text) throw new Error("Usage: yuumira memory citations <text>");
+    if (!text) throw new Error("Usage: peng memory citations <text>");
     const ids = parseMemoryCitations(text);
     const records = await runtime.store.recordMemoryCitations(ids);
     console.log(JSON.stringify({ ids, records }, null, 2));
@@ -1003,7 +1003,7 @@ async function handleMemory(args) {
   }
   if (subcommand === "extract") {
     const text = positionalBeforeFlags(args.slice(1)).join(" ").trim();
-    if (!text) throw new Error("Usage: yuumira memory extract <text> [--persist]");
+    if (!text) throw new Error("Usage: peng memory extract <text> [--persist]");
     const workspaceRecord = await runtime.store.getWorkspace();
     const candidates = extractMemoryCandidates({
       text,
@@ -1049,7 +1049,7 @@ async function handleKnowledge(args) {
   }
   if (subcommand === "create") {
     const [name, root] = args.slice(1);
-    if (!name || !root) throw new Error("Usage: yuumira knowledge create <name> <root>");
+    if (!name || !root) throw new Error("Usage: peng knowledge create <name> <root>");
     const workspaceRecord = await runtime.store.getWorkspace();
     const collection = createKnowledgeCollection({ workspaceId: workspaceRecord.id, name, root });
     await runtime.store.saveKnowledgeCollection(collection);
@@ -1058,7 +1058,7 @@ async function handleKnowledge(args) {
   }
   if (subcommand === "update") {
     const collectionId = args[1];
-    if (!collectionId) throw new Error("Usage: yuumira knowledge update <collection-id> [--name <name>] [--root <path>] [--disabled]");
+    if (!collectionId) throw new Error("Usage: peng knowledge update <collection-id> [--name <name>] [--root <path>] [--disabled]");
     const collection = updateKnowledgeCollection(await runtime.store.getKnowledgeCollection(collectionId), {
       name: readOptionalFlag(args, "--name"),
       root: readOptionalFlag(args, "--root"),
@@ -1072,7 +1072,7 @@ async function handleKnowledge(args) {
   }
   if (subcommand === "delete") {
     const collectionId = args[1];
-    if (!collectionId) throw new Error("Usage: yuumira knowledge delete <collection-id>");
+    if (!collectionId) throw new Error("Usage: peng knowledge delete <collection-id>");
     const collection = await runtime.store.getKnowledgeCollection(collectionId);
     await runtime.store.deleteKnowledgeCollection(collectionId);
     console.log(`${collection.id}\tdeleted`);
@@ -1080,7 +1080,7 @@ async function handleKnowledge(args) {
   }
   if (subcommand === "index") {
     const collectionId = args[1];
-    if (!collectionId) throw new Error("Usage: yuumira knowledge index <collection-id>");
+    if (!collectionId) throw new Error("Usage: peng knowledge index <collection-id>");
     const collection = (await runtime.store.listKnowledgeCollections()).find((item) => item.id === collectionId);
     if (!collection) throw new Error(`Unknown knowledge collection: ${collectionId}`);
     const workspaceRecord = await runtime.store.getWorkspace();
@@ -1091,7 +1091,7 @@ async function handleKnowledge(args) {
   }
   if (subcommand === "search") {
     const query = args.slice(1).join(" ").trim();
-    if (!query) throw new Error("Usage: yuumira knowledge search <query>");
+    if (!query) throw new Error("Usage: peng knowledge search <query>");
     const results = await runtime.store.searchKnowledge({ query });
     for (const result of results) {
       console.log(`${result.rank}\t${result.score}\t${result.title}\t${result.path}`);
@@ -1160,7 +1160,7 @@ async function handleCredentials(args) {
   if (subcommand === "save") {
     const [sourceSlug, mode, ...valueParts] = args.slice(1);
     const value = valueParts.join(" ").trim();
-    if (!sourceSlug || !mode || !value) throw new Error("Usage: yuumira credentials save <source-slug> <mode> <value>");
+    if (!sourceSlug || !mode || !value) throw new Error("Usage: peng credentials save <source-slug> <mode> <value>");
     const record = await runtime.store.saveCredential(createCredentialRecord({ sourceSlug, mode, value }));
     console.log(`${record.sourceSlug}\t${record.mode}\tsaved`);
     return;
@@ -1186,7 +1186,7 @@ async function handleTerminal(args) {
     const exitCode = /^\d+$/.test(exitCodeArg ?? "") ? Number(exitCodeArg) : null;
     const commandArgs = exitCode === null ? args.slice(1) : args.slice(1, -1);
     const commandLine = commandArgs.join(" ").trim();
-    if (!commandLine) throw new Error("Usage: yuumira terminal record <command> [exit-code]");
+    if (!commandLine) throw new Error("Usage: peng terminal record <command> [exit-code]");
     const workspaceRecord = await runtime.store.getWorkspace();
     const sessionId = readFlag(args, "--session");
     const record = createTerminalRecord({ workspaceId: workspaceRecord.id, sessionId, command: commandLine, cwd: workspace, exitCode });
@@ -1197,7 +1197,7 @@ async function handleTerminal(args) {
   }
   if (subcommand === "run") {
     const commandLine = args.slice(1).join(" ").trim();
-    if (!commandLine) throw new Error("Usage: yuumira terminal run <command>");
+    if (!commandLine) throw new Error("Usage: peng terminal run <command>");
     const workspaceRecord = await runtime.store.getWorkspace();
     const sessionId = readFlag(args, "--session");
     const record = await executeTerminalCommand({
@@ -1216,7 +1216,7 @@ async function handleTerminal(args) {
     const recordId = args[1];
     const stream = args[2] || "stdout";
     const data = args.slice(3).join(" ");
-    if (!recordId || !data) throw new Error("Usage: yuumira terminal append <record-id> <stdout|stderr> <text>");
+    if (!recordId || !data) throw new Error("Usage: peng terminal append <record-id> <stdout|stderr> <text>");
     const record = recordTerminalChunk(await runtime.store.getTerminalRecord(recordId), { stream, data });
     await runtime.store.saveTerminalRecord(record);
     console.log(`${record.id}\t${record.events.at(-1).sequence}\t${stream}`);
@@ -1224,7 +1224,7 @@ async function handleTerminal(args) {
   }
   if (subcommand === "finish") {
     const recordId = args[1];
-    if (!recordId) throw new Error("Usage: yuumira terminal finish <record-id> [exit-code]");
+    if (!recordId) throw new Error("Usage: peng terminal finish <record-id> [exit-code]");
     const record = finishTerminalRecord(await runtime.store.getTerminalRecord(recordId), { exitCode: args[2] ?? 0 });
     await runtime.store.saveTerminalRecord(record);
     console.log(`${record.id}\t${record.exitCode}\t${record.status}`);
@@ -1232,7 +1232,7 @@ async function handleTerminal(args) {
   }
   if (subcommand === "replay") {
     const recordId = args[1];
-    if (!recordId) throw new Error("Usage: yuumira terminal replay <record-id>");
+    if (!recordId) throw new Error("Usage: peng terminal replay <record-id>");
     const replay = replayTerminalRecord(await runtime.store.getTerminalRecord(recordId));
     for (const frame of replay.frames) {
       if (frame.type === "output") process.stdout.write(frame.data);
@@ -1263,14 +1263,14 @@ async function handleTerminal(args) {
   }
   if (subcommand === "session-attach") {
     const [sessionId, recordId] = args.slice(1);
-    if (!sessionId || !recordId) throw new Error("Usage: yuumira terminal session-attach <session-id> <record-id>");
+    if (!sessionId || !recordId) throw new Error("Usage: peng terminal session-attach <session-id> <record-id>");
     const result = await runtime.store.attachTerminalRecordToSession(sessionId, recordId);
     console.log(`${result.session.id}\t${result.session.recordIds.length}\t${result.record.id}`);
     return;
   }
   if (subcommand === "session-close") {
     const sessionId = args[1];
-    if (!sessionId) throw new Error("Usage: yuumira terminal session-close <session-id>");
+    if (!sessionId) throw new Error("Usage: peng terminal session-close <session-id>");
     const session = await runtime.store.closeTerminalSession(sessionId);
     console.log(`${session.id}\t${session.status}`);
     return;
@@ -1282,14 +1282,14 @@ async function handleGit(args) {
   const subcommand = args[0];
   if (subcommand === "parse-status") {
     const text = args.slice(1).join(" ");
-    if (!text) throw new Error("Usage: yuumira git parse-status '<status-output>'");
+    if (!text) throw new Error("Usage: peng git parse-status '<status-output>'");
     const entries = parseGitStatusPorcelain(text.replaceAll("\\n", "\n"));
     console.log(JSON.stringify({ entries, summary: summarizeGitStatus(entries) }, null, 2));
     return;
   }
   if (subcommand === "parse-log") {
     const text = args.slice(1).join(" ");
-    if (!text) throw new Error("Usage: yuumira git parse-log '<pretty-log-output>'");
+    if (!text) throw new Error("Usage: peng git parse-log '<pretty-log-output>'");
     console.log(JSON.stringify({ commits: parseGitLog(text), prettyFormat: gitLogPrettyFormat() }, null, 2));
     return;
   }
@@ -1337,7 +1337,7 @@ async function handleHelpers(args) {
   }
   if (subcommand === "plan") {
     const name = args[1];
-    if (!name) throw new Error("Usage: yuumira helpers plan <name> [args...]");
+    if (!name) throw new Error("Usage: peng helpers plan <name> [args...]");
     console.log(JSON.stringify(planHelperCommand({ name, args: args.slice(2), cwd: workspace }), null, 2));
     return;
   }
@@ -1360,7 +1360,7 @@ async function handleHelpers(args) {
   }
   if (subcommand === "run") {
     const name = args[1];
-    if (!name) throw new Error("Usage: yuumira helpers run <name> [args...]");
+    if (!name) throw new Error("Usage: peng helpers run <name> [args...]");
     const result = await runHelperCommand({
       name,
       args: helperForwardArgs(args.slice(2)),
