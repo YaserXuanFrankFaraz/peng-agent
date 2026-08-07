@@ -1,0 +1,75 @@
+import { createRuntime } from "./runtime.js";
+import { createServer } from "./server.js";
+import { JsonStore } from "./store.js";
+import { createDefaultTools } from "./tools.js";
+import { createProviderFromEnv } from "./provider.js";
+
+export const CRAFT_SERVER_MANIFEST = {
+  name: "craft-server",
+  packageName: "@craft-agent/server",
+  compatibility: "clean-room",
+  protocolVersion: 1,
+  transports: ["http", "sse", "websocket"],
+  endpoints: ["/health", "/events", "/ws", "/api/run", "/api/threads", "/api/tools"]
+};
+
+export function parseServerOptions(args = [], env = process.env, cwd = process.cwd()) {
+  return {
+    host: readFlag(args, "--host") ?? env.YUUMIRA_HOST ?? env.HOST ?? "127.0.0.1",
+    port: Number(readFlag(args, "--port") ?? env.YUUMIRA_PORT ?? env.PORT ?? 4721),
+    workspace: readFlag(args, "--workspace") ?? env.YUUMIRA_WORKSPACE ?? cwd,
+    json: hasFlag(args, "--json")
+  };
+}
+
+export function createServerRuntime({ workspace, provider = createProviderFromEnv(), store = new JsonStore({ workspace }) } = {}) {
+  return createRuntime({
+    workspace,
+    store,
+    provider,
+    tools: createDefaultTools({ workspace })
+  });
+}
+
+export async function startHeadlessServer({ args = [], env = process.env, cwd = process.cwd(), stdout = console.log } = {}) {
+  const options = parseServerOptions(args, env, cwd);
+  const runtime = createServerRuntime({ workspace: options.workspace });
+  const app = createServer({ runtime, workspace: options.workspace });
+  const address = await app.listen({ host: options.host, port: options.port });
+  const url = `http://${options.host}:${address.port}`;
+  const info = {
+    ...CRAFT_SERVER_MANIFEST,
+    url,
+    host: options.host,
+    port: address.port,
+    workspace: options.workspace
+  };
+  stdout(options.json ? JSON.stringify(info) : `Peng clean-room craft-server listening on ${url}`);
+  return { app, runtime, address, info };
+}
+
+export function serverHelp() {
+  return `craft-server
+
+Usage:
+  craft-server [--host 127.0.0.1] [--port 4721] [--workspace <path>] [--json]
+  craft-server --manifest
+
+Environment:
+  YUUMIRA_HOST       Host override
+  YUUMIRA_PORT       Port override
+  YUUMIRA_WORKSPACE  Workspace root override
+
+This clean-room entrypoint mirrors the installed YuuMira/Craft Agents headless server boundary.
+`;
+}
+
+function readFlag(args, name) {
+  const index = args.indexOf(name);
+  if (index === -1) return null;
+  return args[index + 1] ?? null;
+}
+
+function hasFlag(args, name) {
+  return args.includes(name);
+}

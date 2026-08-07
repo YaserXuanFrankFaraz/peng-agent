@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Peng</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="mark">P</div>
+          <div>
+            <h1>Peng</h1>
+            <p id="workspace">Loading workspace</p>
+          </div>
+        </div>
+        <nav>
+          <button class="nav-item active" data-view="run">Run</button>
+          <button class="nav-item" data-view="sessions">Sessions</button>
+          <button class="nav-item" data-view="projects">Projects</button>
+          <button class="nav-item" data-view="tasks">Tasks</button>
+          <button class="nav-item" data-view="threads">Threads</button>
+          <button class="nav-item" data-view="memory">Memory</button>
+          <button class="nav-item" data-view="knowledge">Knowledge</button>
+          <button class="nav-item" data-view="terminal">Terminal</button>
+          <button class="nav-item" data-view="extensions">Extensions</button>
+          <button class="nav-item" data-view="events">Events</button>
+        </nav>
+        <section class="sidebar-panel">
+          <h2>Provider</h2>
+          <dl id="provider"></dl>
+        </section>
+      </aside>
+
+      <section class="content">
+        <header class="topbar">
+          <div>
+            <h2 id="view-title">Run</h2>
+            <p id="view-subtitle">Create an agent run and inspect tool output.</p>
+          </div>
+          <button id="refresh" class="secondary">Refresh</button>
+        </header>
+
+        <section id="run" class="view active">
+          <form id="run-form" class="composer">
+            <textarea id="prompt" rows="5" placeholder="Ask the agent to inspect, plan, or change something"></textarea>
+            <div class="composer-actions">
+              <button type="submit">Run task</button>
+            </div>
+          </form>
+          <article class="panel">
+            <h3>Latest output</h3>
+            <pre id="run-output">No run yet.</pre>
+          </article>
+        </section>
+
+        <section id="sessions" class="view">
+          <div class="split">
+            <article class="panel">
+              <h3>Sessions</h3>
+              <div id="sessions-list" class="list"></div>
+            </article>
+            <article class="panel">
+              <h3>Statuses</h3>
+              <div id="statuses-list" class="list"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="threads" class="view">
+          <article class="panel">
+            <h3>Threads</h3>
+            <div id="threads-list" class="list"></div>
+          </article>
+        </section>
+
+        <section id="memory" class="view">
+          <div class="composer">
+            <textarea id="memory-text" rows="3" placeholder="Memory text"></textarea>
+            <div class="composer-actions">
+              <button id="remember-memory" type="button">Remember</button>
+            </div>
+          </div>
+          <div class="split">
+            <article class="panel">
+              <h3>Memories</h3>
+              <div id="memory-list" class="list"></div>
+            </article>
+            <article class="panel">
+              <h3>Context</h3>
+              <div class="row compact-row">
+                <input id="memory-query" class="input" placeholder="Query">
+                <button id="render-memory-context" type="button">Render</button>
+              </div>
+              <pre id="memory-context">No memory context rendered.</pre>
+            </article>
+          </div>
+        </section>
+
+        <section id="knowledge" class="view">
+          <div class="composer">
+            <div class="row">
+              <input id="knowledge-name" class="input" placeholder="Collection name">
+              <input id="knowledge-root" class="input" placeholder="Vault path">
+              <button id="create-knowledge" type="button">Create</button>
+            </div>
+          </div>
+          <div class="split">
+            <article class="panel">
+              <h3>Collections</h3>
+              <div id="knowledge-collections-list" class="list"></div>
+            </article>
+            <article class="panel">
+              <h3>Search</h3>
+              <div class="row compact-row">
+                <input id="knowledge-query" class="input" placeholder="Search indexed notes">
+                <button id="search-knowledge" type="button">Search</button>
+              </div>
+              <div id="knowledge-search-list" class="list"></div>
+            </article>
+          </div>
+          <article class="panel stacked-panel">
+            <h3>Index report</h3>
+            <pre id="knowledge-report">No report loaded.</pre>
+          </article>
+        </section>
+
+        <section id="terminal" class="view">
+          <div class="composer">
+            <div class="row compact-row">
+              <input id="terminal-command" class="input" placeholder="Command line">
+              <input id="terminal-exit" class="input small-input" placeholder="Exit">
+              <button id="record-terminal" type="button">Record</button>
+            </div>
+            <div class="row compact-row">
+              <button id="start-terminal" type="button">Start</button>
+              <button id="run-terminal" type="button" class="secondary">Run</button>
+              <input id="terminal-cols" class="input small-input" placeholder="Cols" value="80">
+              <input id="terminal-rows" class="input small-input" placeholder="Rows" value="24">
+            </div>
+            <div class="row">
+              <input id="terminal-input" class="input" placeholder="Input for selected terminal">
+              <button id="write-terminal" type="button">Send</button>
+              <button id="resize-terminal" type="button" class="secondary">Resize</button>
+              <button id="cancel-terminal" type="button" class="secondary">Cancel</button>
+            </div>
+          </div>
+          <div class="split">
+            <article class="panel">
+              <h3>Terminal history</h3>
+              <div id="terminal-list" class="list"></div>
+            </article>
+            <article class="panel">
+              <h3>Replay</h3>
+              <pre id="terminal-replay">Select a terminal record.</pre>
+            </article>
+          </div>
+          <div class="split stacked-panel">
+            <article class="panel">
+              <h3>Tool icon</h3>
+              <div class="row compact-row">
+                <input id="tool-icon-command" class="input" placeholder="npm test">
+                <button id="resolve-icon" type="button">Resolve</button>
+              </div>
+              <div id="tool-icon-result" class="list"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="projects" class="view">
+          <div class="split">
+            <article class="panel">
+              <h3>Projects</h3>
+              <div id="projects-list" class="list"></div>
+            </article>
+            <article class="panel">
+              <h3>Saved views</h3>
+              <div id="views-list" class="list"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="tasks" class="view">
+          <div class="composer">
+            <input id="search-input" class="input" placeholder="Search sessions, projects, tasks, and threads">
+            <div class="composer-actions">
+              <button id="search-button" type="button">Search</button>
+            </div>
+          </div>
+          <div class="split">
+            <article class="panel">
+              <h3>Tasks</h3>
+              <div id="tasks-list" class="list"></div>
+            </article>
+            <article class="panel">
+              <h3>Search results</h3>
+              <div id="search-list" class="list"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="extensions" class="view">
+          <div class="grid">
+            <article class="panel">
+              <h3>Skills</h3>
+              <div id="skills-list" class="list"></div>
+            </article>
+            <article class="panel">
+              <h3>Workflows</h3>
+              <div id="workflows-list" class="list"></div>
+            </article>
+            <article class="panel">
+              <h3>Sources</h3>
+              <div id="sources-list" class="list"></div>
+            </article>
+            <article class="panel">
+              <h3>Credentials</h3>
+              <div class="row compact-row">
+                <input id="credential-source" class="input" placeholder="Source slug">
+                <input id="credential-mode" class="input small-input" placeholder="Mode">
+                <input id="credential-value" class="input" placeholder="Secret value">
+                <button id="save-credential" type="button">Save</button>
+              </div>
+              <div id="credentials-list" class="list"></div>
+            </article>
+            <article class="panel">
+              <h3>Automations</h3>
+              <div id="automations-list" class="list"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="events" class="view">
+          <div class="split">
+            <article class="panel">
+              <h3>Live events</h3>
+              <div id="events-list" class="events"></div>
+            </article>
+            <article class="panel">
+              <h3>Protocol history</h3>
+              <div id="protocol-list" class="list"></div>
+            </article>
+            <article class="panel">
+              <h3>Queued messages</h3>
+              <div id="queue-list" class="list"></div>
+            </article>
+            <article class="panel">
+              <h3>Run control</h3>
+              <div id="run-control-list" class="list"></div>
+            </article>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

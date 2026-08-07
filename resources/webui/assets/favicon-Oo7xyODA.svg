@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <title>YuuMira app icon</title>
+  <defs>
+    <linearGradient id="card" x1="256" y1="49" x2="256" y2="463" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FDFDFD"/>
+      <stop offset="0.55" stop-color="#F8F8F8"/>
+      <stop offset="1" stop-color="#F2F2F2"/>
+    </linearGradient>
+    <linearGradient id="mascot" x1="254" y1="122" x2="254" y2="393" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#05D0F0"/>
+      <stop offset="0.14" stop-color="#02B9FC"/>
+      <stop offset="0.38" stop-color="#009AFD"/>
+      <stop offset="0.72" stop-color="#0071F8"/>
+      <stop offset="1" stop-color="#015EF5"/>
+    </linearGradient>
+    <linearGradient id="orbit" x1="124" y1="257" x2="356" y2="337" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0FCBEA"/>
+      <stop offset="0.55" stop-color="#04B6F7"/>
+      <stop offset="1" stop-color="#03A8F6"/>
+    </linearGradient>
+    <linearGradient id="planet" x1="373.5" y1="268" x2="373.5" y2="299" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#08C9EF"/>
+      <stop offset="1" stop-color="#007CFD"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="49" y="49" width="414" height="414" rx="91" fill="url(#card)"/>
+
+  <path d="M212 336H296V351C296 374.2 277.2 393 254 393C230.8 393 212 374.2 212 351Z" fill="url(#mascot)"/>
+
+  <path d="M164 122C155.5 122 147.4 125.5 141.4 131.4C129.1 143.7 131.1 163.5 144.4 177.5L195.5 230.6C206.3 241.8 212 256.5 212 272V316H296V272C296 256.5 301.7 241.8 312.5 230.6L363.6 177.5C376.9 163.5 378.9 143.7 366.6 131.4C354.4 119.2 335.2 120.1 323.2 132.5L273.8 183.8C263.1 194.9 244.9 194.9 234.2 183.8L184.8 132.5C179.2 125.8 171.9 122 164 122Z" fill="url(#mascot)"/>
+
+  <g fill="#061B35">
+    <rect x="222" y="207" width="11" height="23" rx="5.5"/>
+    <rect x="276" y="207" width="11" height="23" rx="5.5"/>
+  </g>
+  <path d="M239 246C247 255 261 255 271 246" fill="none" stroke="#061B35" stroke-width="7" stroke-linecap="round"/>
+
+  <path d="M168 251C140 264 124 278 124 293C124 320 158 338 205 345C258 353 316 337 354 312C360 308 361 301 357 297C353 293 347 293 341 297C309 318 261 331 216 328C173 325 140 312 137 292C135 279 147 264 168 251Z" fill="url(#orbit)"/>
+  <circle cx="373.5" cy="283.5" r="15.5" fill="url(#planet)"/>
+</svg>

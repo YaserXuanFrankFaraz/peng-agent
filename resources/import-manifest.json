@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "importedAt": "2026-08-07T22:53:22.737Z",
+  "sourceRoot": "/Applications/YuuMira.app/Contents/Resources/resources",
+  "outputRoot": "/Users/neoy/Documents/ChatGPT/Copy YuuMira/resources",
+  "directories": [
+    {
+      "directory": "tool-icons",
+      "fileCount": 57,
+      "byteCount": 406345
+    },
+    {
+      "directory": "themes",
+      "fileCount": 15,
+      "byteCount": 9166
+    },
+    {
+      "directory": "docs",
+      "fileCount": 17,
+      "byteCount": 202736
+    },
+    {
+      "directory": "permissions",
+      "fileCount": 1,
+      "byteCount": 26274
+    },
+    {
+      "directory": "release-notes",
+      "fileCount": 74,
+      "byteCount": 258468
+    },
+    {
+      "directory": "craft-logos",
+      "fileCount": 4,
+      "byteCount": 154508
+    },
+    {
+      "directory": "bin",
+      "fileCount": 9,
+      "byteCount": 800
+    },
+    {
+      "directory": "scripts",
+      "fileCount": 20,
+      "byteCount": 164322
+    },
+    {
+      "directory": "webui",
+      "fileCount": 409,
+      "byteCount": 22295699
+    }
+  ],
+  "files": [
+    {
+      "file": "config-defaults.json",
+      "byteCount": 1078
+    },
+    {
+      "file": "source.png",
+      "byteCount": 389485
+    }
+  ]
+}

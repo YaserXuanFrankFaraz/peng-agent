@@ -1,0 +1,12 @@
+.yumira/
+.memsearch/
+AGENTS.md
+dist/
+node_modules/
+.DS_Store
+resources/peng.iconset/
+resources/peng-icon-1024.png
+__pycache__/
+*.pyc
+*.pyo
+npm-debug.log*
