@@ -214,6 +214,10 @@ export function renderInfoPlist(options) {
   <string>${xmlEscape(options.appName)}</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
+  <key>LSUIElement</key>
+  <true/>
+  <key>NSHighResolutionCapable</key>
+  <true/>
 ${options.iconPath ? `  <key>CFBundleIconFile</key>\n  <string>Peng.icns</string>\n` : ""}
   <key>CFBundleShortVersionString</key>
   <string>${xmlEscape(options.version)}</string>
@@ -240,18 +244,141 @@ export function renderLauncherScript() {
 set -eu
 APP_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 SERVER_DIR="$APP_DIR/Resources/server"
-if [ -x "$SERVER_DIR/craft-server" ]; then
+DATA_DIR=$(printenv PENG_DATA_DIR || true)
+[ -n "$DATA_DIR" ] || DATA_DIR="$HOME/Library/Application Support/Peng"
+LOG_DIR="$HOME/Library/Logs/Peng"
+PID_FILE="$DATA_DIR/server.pid"
+URL_FILE="$DATA_DIR/server.url"
+LOG_FILE="$LOG_DIR/server.log"
+mkdir -p "$DATA_DIR" "$LOG_DIR"
+
+run_server() {
   cd "$SERVER_DIR"
-  exec "$SERVER_DIR/craft-server" "$@"
+  if [ -x "$SERVER_DIR/craft-server" ]; then
+    exec "$SERVER_DIR/craft-server" "$@"
+  fi
+  if [ -x "$SERVER_DIR/bun" ]; then
+    exec "$SERVER_DIR/bun" "$SERVER_DIR/bin/craft-server.mjs" "$@"
+  fi
+  if [ -x "$SERVER_DIR/node" ]; then
+    exec "$SERVER_DIR/node" "$SERVER_DIR/bin/craft-server.mjs" "$@"
+  fi
+  NODE_RUNTIME=$(command -v node || true)
+  [ -n "$NODE_RUNTIME" ] || { echo "Peng could not find a JavaScript runtime." >&2; exit 1; }
+  exec "$NODE_RUNTIME" "$SERVER_DIR/bin/craft-server.mjs" "$@"
+}
+
+is_running() {
+  [ -f "$PID_FILE" ] || return 1
+  SERVER_PID=$(cat "$PID_FILE")
+  [ -n "$SERVER_PID" ] || return 1
+  kill -0 "$SERVER_PID" 2>/dev/null
+}
+
+read_url() {
+  [ -f "$URL_FILE" ] || return 1
+  cat "$URL_FILE"
+}
+
+# LaunchServices can pass a process serial number when Finder opens a shell app.
+case "$#" in
+  0) ;;
+  *) case "$1" in -psn_*) set -- ;; esac ;;
+esac
+
+if [ "$#" -eq 1 ] && [ "$1" = "--stop" ]; then
+  if is_running; then
+    kill "$SERVER_PID" 2>/dev/null || true
+    i=0
+    while kill -0 "$SERVER_PID" 2>/dev/null && [ "$i" -lt 20 ]; do
+      sleep 0.1
+      i=$((i + 1))
+    done
+    echo "Peng server stopped."
+  else
+    echo "Peng server is not running."
+  fi
+  rm -f "$PID_FILE" "$URL_FILE"
+  exit 0
 fi
+
+if [ "$#" -eq 1 ] && [ "$1" = "--status" ]; then
+  if is_running; then
+    EXISTING_URL=$(read_url || true)
+    if [ -n "$EXISTING_URL" ] && /usr/bin/curl -fsS "$EXISTING_URL/health" >/dev/null 2>&1; then
+      echo "Peng is running at $EXISTING_URL"
+      exit 0
+    fi
+  fi
+  echo "Peng server is not running."
+  exit 0
+fi
+
+# Explicit arguments keep the original headless server contract for CLI and diagnostics.
+if [ "$#" -gt 0 ]; then
+  run_server "$@"
+fi
+
+if is_running; then
+  EXISTING_URL=$(read_url || true)
+  if [ -n "$EXISTING_URL" ] && /usr/bin/curl -fsS "$EXISTING_URL/health" >/dev/null 2>&1; then
+    /usr/bin/open "$EXISTING_URL" >/dev/null 2>&1 || true
+    exit 0
+  fi
+fi
+rm -f "$PID_FILE" "$URL_FILE"
+
+HOST=$(printenv PENG_HOST || true)
+[ -n "$HOST" ] || HOST=127.0.0.1
+PORT=$(printenv PENG_PORT || true)
+[ -n "$PORT" ] || PORT=0
+WORKSPACE=$(printenv PENG_WORKSPACE || true)
+[ -n "$WORKSPACE" ] || WORKSPACE="$HOME"
+OPEN_BROWSER=$(printenv PENG_OPEN_BROWSER || true)
+[ -n "$OPEN_BROWSER" ] || OPEN_BROWSER=1
+
 cd "$SERVER_DIR"
-if [ -x "$SERVER_DIR/bun" ]; then
-  exec "$SERVER_DIR/bun" "$SERVER_DIR/bin/craft-server.mjs" "$@"
+if [ -x "$SERVER_DIR/craft-server" ]; then
+  nohup "$SERVER_DIR/craft-server" --host "$HOST" --port "$PORT" --workspace "$WORKSPACE" --json >"$LOG_FILE" 2>&1 < /dev/null &
+elif [ -x "$SERVER_DIR/bun" ]; then
+  nohup "$SERVER_DIR/bun" "$SERVER_DIR/bin/craft-server.mjs" --host "$HOST" --port "$PORT" --workspace "$WORKSPACE" --json >"$LOG_FILE" 2>&1 < /dev/null &
+elif [ -x "$SERVER_DIR/node" ]; then
+  nohup "$SERVER_DIR/node" "$SERVER_DIR/bin/craft-server.mjs" --host "$HOST" --port "$PORT" --workspace "$WORKSPACE" --json >"$LOG_FILE" 2>&1 < /dev/null &
+else
+  NODE_RUNTIME=$(command -v node || true)
+  [ -n "$NODE_RUNTIME" ] || { echo "Peng could not find a JavaScript runtime." >&2; exit 1; }
+  nohup "$NODE_RUNTIME" "$SERVER_DIR/bin/craft-server.mjs" --host "$HOST" --port "$PORT" --workspace "$WORKSPACE" --json >"$LOG_FILE" 2>&1 < /dev/null &
 fi
-if [ -x "$SERVER_DIR/node" ]; then
-  exec "$SERVER_DIR/node" "$SERVER_DIR/bin/craft-server.mjs" "$@"
+SERVER_PID=$!
+printf '%s\n' "$SERVER_PID" > "$PID_FILE"
+
+URL=""
+i=0
+while [ "$i" -lt 100 ]; do
+  if [ -f "$LOG_FILE" ]; then
+    URL=$(sed -n 's/.*"url":"\\([^"]*\\)".*/\\1/p' "$LOG_FILE" | tail -n 1 || true)
+  fi
+  if [ -n "$URL" ] && /usr/bin/curl -fsS "$URL/health" >/dev/null 2>&1; then
+    break
+  fi
+  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+    cat "$LOG_FILE" >&2 || true
+    rm -f "$PID_FILE" "$URL_FILE"
+    exit 1
+  fi
+  sleep 0.1
+  i=$((i + 1))
+done
+
+if [ -z "$URL" ]; then
+  echo "Peng server did not become ready. See $LOG_FILE" >&2
+  exit 1
 fi
-exec node "$SERVER_DIR/bin/craft-server.mjs" "$@"
+printf '%s\n' "$URL" > "$URL_FILE"
+if [ "$OPEN_BROWSER" != "0" ]; then
+  /usr/bin/open "$URL" >/dev/null 2>&1 || true
+fi
+echo "Peng is running at $URL"
 `;
 }
 

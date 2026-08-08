@@ -54,6 +54,8 @@ Peng is a self-contained AI agent application foundation. The runtime, web UI, r
 - Source config discovery and validation for MCP/API/local integrations
 - Headless HTTP/SSE/WebSocket server for local UI and client integration, with a Craft-compatible `craft-server` executable entrypoint
 - macOS `.app` bundle packager with Peng bundle id, URL schemes, server resources, and web UI layout
+- Finder-launchable macOS app lifecycle: double-click starts the bundled local server, waits for `/health`, and opens the Web UI in the default browser; `--status` and `--stop` manage the local process
+- Compressed `Peng v0.1.0.dmg` installer image with an `/Applications` shortcut
 - Protocol lifecycle events for runs, assistant messages, tool calls, completion, and failures
 - Queued follow-up messages with acknowledgement, persisted replay state, and protocol replay events
 - Cooperative stop/resume run control with persisted heartbeats and watchdog stale-run diagnostics
@@ -287,7 +289,15 @@ node ./bin/package-macos-app.mjs --out dist/Peng.app --sign --verify
 node ./bin/package-macos-app.mjs --server-binary dist/craft-server --out dist/Peng.app --sign --verify
 ```
 
-Open `http://127.0.0.1:4721/` for the web UI. See `docs/protocol.md` for the JSON API, SSE event stream, and WebSocket command transport.
+Create the installable DMG (macOS only):
+
+```bash
+npm run package:dmg
+```
+
+The resulting `dist/Peng-v0.1.0.dmg` contains a self-contained `Peng.app`. Open the DMG, drag Peng to Applications, and double-click `Peng.app`; it starts the bundled server and opens the Web UI automatically. The app stores runtime state under `.peng/` in the selected workspace and keeps its launcher state under `~/Library/Application Support/Peng`.
+
+For an existing app bundle, use `dist/Peng.app/Contents/MacOS/Peng --status` or `--stop`. To select a workspace, set `PENG_WORKSPACE=/path/to/workspace` before launching. `PENG_OPEN_BROWSER=0` is useful for headless checks. See `docs/protocol.md` for the JSON API, SSE event stream, and WebSocket command transport.
 
 ## Model providers
 

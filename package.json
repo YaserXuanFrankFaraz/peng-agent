@@ -9,6 +9,7 @@
     "craft-server": "./bin/craft-server.mjs",
     "build-craft-server": "./bin/build-craft-server.mjs",
     "package-macos-app": "./bin/package-macos-app.mjs",
+    "package-dmg": "./bin/package-dmg.mjs",
     "import-peng-resources": "./bin/import-peng-resources.mjs"
   },
   "scripts": {
@@ -16,6 +17,7 @@
     "server": "node ./bin/craft-server.mjs",
     "build:craft-server": "node ./bin/build-craft-server.mjs",
     "package:macos": "node ./bin/package-macos-app.mjs --out dist/Peng.app --sign --verify",
+    "package:dmg": "node ./bin/package-dmg.mjs --out dist/Peng-v0.1.0.dmg --sign --verify",
     "resources:import": "node ./bin/import-peng-resources.mjs",
     "test": "node --test --test-concurrency=1",
     "demo": "node ./bin/peng.mjs run \"Inspect this workspace and suggest next steps\""

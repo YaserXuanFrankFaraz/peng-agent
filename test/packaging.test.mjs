@@ -5,7 +5,21 @@ import { constants } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { dmgLayout, parseDmgOptions } from "../src/dmg.js";
 import { bundleManifest, macosBundleLayout, packageMacosApp, parseBundleOptions, renderInfoPlist, verifyMacosApp } from "../src/macos-bundle.js";
+
+test("plans a Peng DMG with an Applications shortcut", async () => {
+  const workspace = await mkdtemp(path.join(tmpdir(), "peng-dmg-plan-test-"));
+  const options = parseDmgOptions(["--app", "dist/Peng.app", "--out", "dist/Peng-v0.1.0.dmg", "--staging", "tmp/image"], workspace, {});
+  const layout = dmgLayout(options);
+
+  assert.equal(options.appPath, path.join(workspace, "dist", "Peng.app"));
+  assert.equal(options.outPath, path.join(workspace, "dist", "Peng-v0.1.0.dmg"));
+  assert.equal(options.volumeName, "Peng v0.1.0");
+  assert.equal(layout.stagingDir, path.join(workspace, "tmp", "image"));
+  assert.equal(layout.appPath, path.join(layout.stagingDir, "Peng.app"));
+  assert.equal(layout.applicationsLink, path.join(layout.stagingDir, "Applications"));
+});
 
 test("packages the Peng v0.1.0 macOS app bundle layout", async () => {
   const workspace = await mkdtemp(path.join(tmpdir(), "peng-bundle-test-"));
