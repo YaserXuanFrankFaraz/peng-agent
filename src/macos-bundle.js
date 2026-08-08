@@ -3,6 +3,9 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const nativeHostSource = fileURLToPath(new URL("../native/PengApp.swift", import.meta.url));
 
 export const MACOS_BUNDLE_DEFAULTS = {
   appName: "Peng",
@@ -58,8 +61,7 @@ export async function packageMacosApp({ args = [], cwd = process.cwd(), env = pr
 
   await writeFile(layout.infoPlist, renderInfoPlist(options), "utf8");
   await writeFile(layout.pkgInfo, "APPL????", "utf8");
-  await writeFile(layout.launcher, renderLauncherScript(), "utf8");
-  await chmod(layout.launcher, 0o755);
+  await buildNativeLauncher(layout.launcher);
   await copyWebui(options.webuiDir, layout.webuiDir, options.appName);
   await copyWebui(options.webuiDir, layout.runtimeWebuiDir, options.appName);
   await cp(path.join(cwd, "src"), layout.serverSourceDir, { recursive: true });
@@ -108,6 +110,15 @@ export async function packageMacosApp({ args = [], cwd = process.cwd(), env = pr
 export async function signMacosApp(appPath, { identity = "-" } = {}) {
   await cleanMacosSigningAttributes(appPath);
   const result = await captureCommand(["codesign", "--force", "--deep", "--sign", identity, appPath]);
+  if (result.code !== 0 && isRecoverableXattrVerificationFailure(result)) {
+    const fallback = await signMacosAppFromTemporaryCopy(appPath, identity);
+    return {
+      ...fallback,
+      originalPath: appPath,
+      originalFailure: result,
+      recoveredViaTemporaryCopy: fallback.ok
+    };
+  }
   return {
     ok: result.code === 0,
     identity,
@@ -116,6 +127,38 @@ export async function signMacosApp(appPath, { identity = "-" } = {}) {
     stdout: result.stdout,
     stderr: result.stderr
   };
+}
+
+async function signMacosAppFromTemporaryCopy(appPath, identity) {
+  const tempRoot = await mkdtemp(path.join(tmpdir(), "peng-codesign-"));
+  const tempApp = path.join(tempRoot, path.basename(appPath));
+  try {
+    await cp(appPath, tempApp, { recursive: true });
+    await cleanMacosSigningAttributes(tempApp);
+    const result = await captureCommand(["codesign", "--force", "--deep", "--sign", identity, tempApp]);
+    if (result.code !== 0) {
+      return {
+        ok: false,
+        identity,
+        code: result.code,
+        signal: result.signal,
+        stdout: result.stdout,
+        stderr: result.stderr
+      };
+    }
+    await rm(appPath, { recursive: true, force: true });
+    await cp(tempApp, appPath, { recursive: true });
+    return {
+      ok: true,
+      identity,
+      code: result.code,
+      signal: result.signal,
+      stdout: result.stdout,
+      stderr: result.stderr
+    };
+  } finally {
+    await rm(tempRoot, { recursive: true, force: true });
+  }
 }
 
 export async function verifyMacosApp(appPath) {
@@ -218,8 +261,6 @@ export function renderInfoPlist(options) {
   <string>${xmlEscape(options.appName)}</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
-  <key>LSUIElement</key>
-  <true/>
   <key>NSHighResolutionCapable</key>
   <true/>
 ${options.iconPath ? `  <key>CFBundleIconFile</key>\n  <string>Peng.icns</string>\n` : ""}
@@ -325,8 +366,8 @@ fi
 
 if is_running; then
   EXISTING_URL=$(read_url || true)
-  if [ -n "$EXISTING_URL" ] && /usr/bin/curl -fsS "$EXISTING_URL/health" >/dev/null 2>&1; then
-    /usr/bin/open "$EXISTING_URL" >/dev/null 2>&1 || true
+  if [ -n "$EXISTING_URL" ]; then
+    echo "Peng server is already running at $EXISTING_URL"
     exit 0
   fi
 fi
@@ -338,9 +379,6 @@ PORT=$(printenv PENG_PORT || true)
 [ -n "$PORT" ] || PORT=0
 WORKSPACE=$(printenv PENG_WORKSPACE || true)
 [ -n "$WORKSPACE" ] || WORKSPACE="$HOME"
-OPEN_BROWSER=$(printenv PENG_OPEN_BROWSER || true)
-[ -n "$OPEN_BROWSER" ] || OPEN_BROWSER=1
-
 cd "$SERVER_DIR"
 if [ -x "$SERVER_DIR/craft-server" ]; then
   nohup "$SERVER_DIR/craft-server" --host "$HOST" --port "$PORT" --workspace "$WORKSPACE" --json >"$LOG_FILE" 2>&1 < /dev/null &
@@ -379,11 +417,37 @@ if [ -z "$URL" ]; then
   exit 1
 fi
 printf '%s\n' "$URL" > "$URL_FILE"
-if [ "$OPEN_BROWSER" != "0" ]; then
-  /usr/bin/open "$URL" >/dev/null 2>&1 || true
-fi
+# The native WKWebView host owns the UI; this legacy shell template never opens a browser.
 echo "Peng is running at $URL"
 `;
+}
+
+async function buildNativeLauncher(destination) {
+  if (process.platform !== "darwin") {
+    throw new Error("Peng native macOS packaging requires macOS.");
+  }
+  const architecture = process.arch === "x64" ? "x86_64" : "arm64";
+  const result = await captureCommand([
+    "swiftc",
+    "-O",
+    "-module-cache-path",
+    path.join(tmpdir(), "peng-swift-module-cache"),
+    "-target",
+    `${architecture}-apple-macosx13.0`,
+    "-framework",
+    "AppKit",
+    "-framework",
+    "WebKit",
+    "-o",
+    destination,
+    nativeHostSource
+  ]);
+  if (result.code !== 0) {
+    const error = new Error(`Unable to build Peng native host: ${result.stderr || result.stdout || result.code}`);
+    error.code = "native_host_build_failed";
+    throw error;
+  }
+  await chmod(destination, 0o755);
 }
 
 export function bundleManifest(options, layout) {
@@ -401,6 +465,10 @@ export function bundleManifest(options, layout) {
       webui: path.relative(options.outDir, layout.webuiDir),
       runtimeWebui: path.relative(options.outDir, layout.runtimeWebuiDir),
       source: path.relative(options.outDir, layout.serverSourceDir)
+    },
+    ui: {
+      mode: "native-wkwebview",
+      externalBrowser: false
     },
     icon: options.iconPath ? path.relative(options.outDir, layout.iconFile) : null,
     urlSchemes: options.urlSchemes

@@ -54,7 +54,7 @@ Peng is a self-contained AI agent application foundation. The runtime, web UI, r
 - Source config discovery and validation for MCP/API/local integrations
 - Headless HTTP/SSE/WebSocket server for local UI and client integration, with a Craft-compatible `craft-server` executable entrypoint
 - macOS `.app` bundle packager with Peng bundle id, URL schemes, server resources, and web UI layout
-- Finder-launchable macOS app lifecycle: double-click starts the bundled local server, waits for `/health`, and opens the Web UI in the default browser; `--status` and `--stop` manage the local process
+- Finder-launchable macOS app lifecycle: double-click starts the bundled local server and renders the Web UI inside a native AppKit/WKWebView window; `--status` and `--stop` manage the local process
 - Compressed `Peng v0.1.0.dmg` installer image with an `/Applications` shortcut
 - Protocol lifecycle events for runs, assistant messages, tool calls, completion, and failures
 - Queued follow-up messages with acknowledgement, persisted replay state, and protocol replay events
@@ -295,9 +295,9 @@ Create the installable DMG (macOS only):
 npm run package:dmg
 ```
 
-The resulting `dist/Peng-v0.1.0.dmg` contains a self-contained `Peng.app`. Open the DMG, drag Peng to Applications, and double-click `Peng.app`; it starts the bundled server and opens the Web UI automatically. The app stores runtime state under `.peng/` in the selected workspace and keeps its launcher state under `~/Library/Application Support/Peng`.
+The resulting `dist/Peng-v0.1.0.dmg` contains a self-contained `Peng.app`. Open the DMG, drag Peng to Applications, and double-click `Peng.app`; it starts the bundled server and renders the Web UI in Peng's own native window. It does not open Chrome or Safari. The app stores runtime state under `.peng/` in the selected workspace and keeps its launcher state under `~/Library/Application Support/Peng`.
 
-For an existing app bundle, use `dist/Peng.app/Contents/MacOS/Peng --status` or `--stop`. To select a workspace, set `PENG_WORKSPACE=/path/to/workspace` before launching. `PENG_OPEN_BROWSER=0` is useful for headless checks. See `docs/protocol.md` for the JSON API, SSE event stream, and WebSocket command transport.
+For an existing app bundle, use `dist/Peng.app/Contents/MacOS/Peng --status` or `--stop`. To select a workspace, set `PENG_WORKSPACE=/path/to/workspace` before launching. See `docs/protocol.md` for the JSON API, SSE event stream, and WebSocket command transport.
 
 ## Model providers
 

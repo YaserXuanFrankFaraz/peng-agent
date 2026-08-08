@@ -48,6 +48,8 @@ test("packages the Peng v0.1.0 macOS app bundle layout", async () => {
   assert.deepEqual(bundleManifest(result.options, layout).urlSchemes, ["peng", "craftagents"]);
   assert.equal(bundleManifest(result.options, layout).urlSchemes.includes("peng"), true);
   assert.equal(bundleManifest(result.options, layout).urlSchemes.includes("craftagents"), true);
+  assert.equal(bundleManifest(result.options, layout).ui.mode, "native-wkwebview");
+  assert.equal(bundleManifest(result.options, layout).ui.externalBrowser, false);
   assert.match(await readFile(layout.infoPlist, "utf8"), /<string>com\.yaserxuanfrankfaraz\.peng<\/string>/);
   assert.match(await readFile(layout.infoPlist, "utf8"), /<string>Peng<\/string>/);
   assert.match(await readFile(layout.infoPlist, "utf8"), /<string>craftagents<\/string>/);
@@ -55,11 +57,10 @@ test("packages the Peng v0.1.0 macOS app bundle layout", async () => {
   assert.equal(await readFile(layout.iconFile, "utf8"), "test-icon");
   assert.match(await readFile(path.join(layout.webuiDir, "index.html"), "utf8"), /Peng/);
   assert.match(await readFile(path.join(layout.runtimeWebuiDir, "index.html"), "utf8"), /Peng/);
-  assert.match(await readFile(layout.launcher, "utf8"), /Resources\/server/);
   await access(layout.launcher, constants.X_OK);
   assert.match(await readFile(layout.manifest, "utf8"), /Contents\/MacOS\/Peng/);
   assert.equal(JSON.parse(await readFile(layout.manifest, "utf8")).server.node, path.relative(result.options.outDir, layout.nodeBinary));
-  assert.equal(JSON.parse((await capture([layout.launcher, "--manifest"])).stdout).name, "craft-server");
+  assert.equal(JSON.parse((await capture([layout.launcher, "--manifest"])).stdout).name, "peng-app");
 });
 
 test("plans macOS app bundle options without writing files", async () => {
@@ -128,7 +129,7 @@ test("ad-hoc signs and verifies a packaged macOS app bundle", async () => {
   assert.equal(result.signature.ok, true);
   assert.equal(result.signature.identity, "-");
   assert.equal(result.verification.ok, true);
-  assert.equal(JSON.parse((await capture([macosBundleLayout(result.options).launcher, "--manifest"])).stdout).name, "craft-server");
+  assert.equal(JSON.parse((await capture([macosBundleLayout(result.options).launcher, "--manifest"])).stdout).name, "peng-app");
   assert.equal((await verifyMacosApp(result.options.outDir)).ok, true);
 });
 
