@@ -464,6 +464,15 @@ test("streams and controls runs over WebSocket", async () => {
     assert.equal(rpcWorkspaces.channel, "workspaces:get");
     assert.equal(rpcWorkspaces.result[0].root, app.workspace);
 
+    const rpcUnread = await rpc("rpc-unread-summary-1", "sessions:getUnreadSummary");
+    assert.equal(rpcUnread.result.hasUnreadByWorkspace[rpcWorkspaces.result[0].id], false);
+    assert.equal(rpcUnread.result.unreadCount, 0);
+    assert.equal((await rpc("rpc-statuses-list-1", "statuses:list")).result.every((status) => status.id), true);
+    assert.deepEqual((await rpc("rpc-labels-list-1", "labels:list")).result, []);
+    const rpcSetupNeeds = (await rpc("rpc-onboarding-needs-1", "onboarding:getAuthState")).result.setupNeeds;
+    assert.equal(typeof rpcSetupNeeds.isFullyConfigured, "boolean");
+    assert.equal(typeof rpcSetupNeeds.needsCredentials, "boolean");
+
     const rpcSessionCreated = await rpc("rpc-session-create-1", "sessions:create", [{ prompt: "RPC session prompt" }]);
     assert.equal(rpcSessionCreated.result.messages[0].role, "user");
     assert.equal(rpcSessionCreated.result.messages[0].content, "RPC session prompt");
@@ -845,7 +854,7 @@ test("streams and controls runs over WebSocket", async () => {
 	    assert.match(browserPane.id, /^browser_pane_/);
 	    assert.equal(browserPane.title, "Pane One");
 	    assert.match(browserPane.snapshot.excerpt, /First browser snapshot body/);
-	    assert.equal((await rpc("rpc-browser-pane-list-1", "browser-pane:list")).result.activePaneId, browserPane.id);
+	    assert.equal((await rpc("rpc-browser-pane-list-1", "browser-pane:list")).result.find((pane) => pane.id === browserPane.id).focused, true);
 	    const navigatedPane = (await rpc("rpc-browser-pane-navigate-1", "browser-pane:navigate", [{ paneId: browserPane.id, url: browserTwo, snapshot: true }])).result;
 	    assert.equal(navigatedPane.canGoBack, true);
 	    assert.equal(navigatedPane.title, "Pane Two");

@@ -1613,7 +1613,14 @@ async function handleCraftRpcRequest({ channel, args, runtime, events, automatio
   if (channel === "window:getMode") return "remote";
   if (channel.startsWith("window:")) return windowRpc({ store, runtime, channel, input: args[0] ?? {} });
   if (channel === "sessions:get") return (await store.listSessions()).map(sessionForRpc);
-  if (channel === "sessions:getUnreadSummary") return { unreadCount: 0, sessionIds: [] };
+  if (channel === "sessions:getUnreadSummary") {
+    const workspaceId = (await store.getWorkspace()).id;
+    return {
+      unreadCount: 0,
+      sessionIds: [],
+      hasUnreadByWorkspace: { [workspaceId]: false }
+    };
+  }
   if (channel === "sessions:markAllRead") return recordRpcEvent(store, channel, args[0] ?? {}, { event: "markAllRead" });
   if (channel === "sessions:getMessages") {
     const sessionId = required(args[0]?.sessionId ?? args[0], "sessionId");
@@ -1731,7 +1738,7 @@ async function handleCraftRpcRequest({ channel, args, runtime, events, automatio
   if (channel === "tasks:generated") return recordRpcEvent(store, channel, args[0] ?? {});
 	  if (channel === "views:list") return store.listViews(args[0] ?? {});
   if (channel === "views:save") return saveViewFromRpc(store, args[0] ?? {});
-	  if (channel === "statuses:list") return store.getStatusConfig();
+	  if (channel === "statuses:list") return (await store.getStatusConfig()).statuses;
   if (channel === "statuses:reorder") {
     const config = await store.getStatusConfig();
     const order = args[0]?.order ?? args[0]?.statusIds ?? args[0] ?? [];
@@ -1747,7 +1754,7 @@ async function handleCraftRpcRequest({ channel, args, runtime, events, automatio
     return next;
   }
   if (channel === "statuses:changed") return recordRpcEvent(store, channel, args[0] ?? {});
-	  if (channel === "labels:list") return store.getLabelConfig();
+	  if (channel === "labels:list") return flattenLabels(await store.getLabelConfig());
   if (channel === "labels:create") {
     const config = createLabel(await store.getLabelConfig(), args[0] ?? {});
     await store.saveLabelConfig(config);
@@ -1915,7 +1922,7 @@ async function handleCraftRpcRequest({ channel, args, runtime, events, automatio
     return logoutProviderOAuth(store, channel.split(":")[0]);
   }
   if (channel === "copilot:deviceCode" || channel === "xai:deviceCode") return providerDeviceCode(store, channel.split(":")[0], args[0] ?? {});
-  if (channel === "browser-pane:list") return browserPaneList(await preferences());
+  if (channel === "browser-pane:list") return browserPaneList(await preferences()).panes;
   if (channel === "browser-pane:create" || channel === "browser-empty-state:launch") return createBrowserPane(store, args[0] ?? {}, runtime);
   if (channel === "browser-pane:navigate") return navigateBrowserPane(store, args[0] ?? {}, runtime);
   if (channel === "browser-pane:go-back") return moveBrowserPaneHistory(store, args[0] ?? {}, -1);
@@ -2336,7 +2343,7 @@ function rpcPreferences(stored = {}) {
     browserToolEnabled: defaults.browserToolEnabled,
 	    computerUseEnabled: defaults.computerUseEnabled,
 	    networkProxy: null,
-	    quickLauncher: {},
+	    quickLauncher: { pages: [{ global: {}, workspaces: {} }], showNames: false },
 	    terminalButtons: [],
 	    terminalHiddenFrequentCommands: [],
 	    rpcEvents: [],
@@ -3481,9 +3488,16 @@ async function piProviderModels(input = {}, runtime) {
 function onboardingAuthState(preferences) {
   const sessions = preferences.onboardingOAuthSessions ?? [];
   const latestClaude = sessions.find((session) => session.provider === "claude") ?? null;
+  const authenticated = Boolean(preferences.llmConnection?.provider || process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY);
+  const deferred = Boolean(preferences.onboardingDeferred);
   return {
-    authenticated: Boolean(preferences.llmConnection?.provider || process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY),
-    deferred: Boolean(preferences.onboardingDeferred),
+    authenticated,
+    deferred,
+    setupNeeds: {
+      needsBillingConfig: !authenticated,
+      needsCredentials: !authenticated,
+      isFullyConfigured: authenticated || deferred
+    },
     claudeOAuth: {
       available: true,
       hasState: Boolean(preferences.claudeOAuthState),

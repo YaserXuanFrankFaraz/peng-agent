@@ -1,4 +1,4 @@
-import { chmod, cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -18,6 +18,8 @@ export function parseBundleOptions(args = [], cwd = process.cwd(), env = process
   const importedWebuiDir = path.join(defaultResourcesDir, "webui");
   const defaultIconPath = path.join(defaultResourcesDir, "peng.icns");
   const iconPath = readFlag(args, "--icon") ?? env.PENG_APP_ICON ?? (existsSync(defaultIconPath) ? defaultIconPath : null);
+  const bunBinary = readFlag(args, "--bun-binary") ?? env.PENG_BUN_BINARY ?? env.BUN_BINARY ?? null;
+  const nodeBinary = readFlag(args, "--node-binary") ?? env.PENG_NODE_BINARY ?? (bunBinary ? null : process.execPath);
   return {
     ...MACOS_BUNDLE_DEFAULTS,
     appName: readFlag(args, "--name") ?? env.PENG_APP_NAME ?? MACOS_BUNDLE_DEFAULTS.appName,
@@ -26,8 +28,8 @@ export function parseBundleOptions(args = [], cwd = process.cwd(), env = process
     executableName: readFlag(args, "--executable") ?? env.PENG_EXECUTABLE_NAME ?? MACOS_BUNDLE_DEFAULTS.executableName,
     outDir: path.isAbsolute(outDir) ? outDir : path.join(cwd, outDir),
     serverBinary: readFlag(args, "--server-binary"),
-    bunBinary: readFlag(args, "--bun-binary") ?? env.PENG_BUN_BINARY ?? env.BUN_BINARY ?? findExecutable("bun", env),
-    nodeBinary: readFlag(args, "--node-binary") ?? env.PENG_NODE_BINARY ?? (findExecutable("bun", env) ? null : process.execPath),
+    bunBinary,
+    nodeBinary,
     webuiDir: readFlag(args, "--webui") ?? (existsSync(importedWebuiDir) ? importedWebuiDir : path.join(cwd, "webui")),
     resourcesDir: readFlag(args, "--resources") ?? (existsSync(defaultResourcesDir) ? defaultResourcesDir : null),
     iconPath: iconPath ? (path.isAbsolute(iconPath) ? iconPath : path.join(cwd, iconPath)) : null,
@@ -72,6 +74,7 @@ export async function packageMacosApp({ args = [], cwd = process.cwd(), env = pr
   if (options.nodeBinary) {
     await cp(path.resolve(cwd, options.nodeBinary), layout.nodeBinary);
     await chmod(layout.nodeBinary, 0o755);
+    await embedNodeRuntime(path.resolve(cwd, options.nodeBinary), layout);
   }
   if (options.bunBinary) {
     await cp(path.resolve(cwd, options.bunBinary), layout.bunBinary);
@@ -188,6 +191,7 @@ export function macosBundleLayout(options) {
     serverBinary: path.join(serverDir, "craft-server"),
     bunBinary: path.join(serverDir, "bun"),
     nodeBinary: path.join(serverDir, "node"),
+    nodeLibrariesDir: path.join(resourcesRoot, "lib"),
     serverEntrypoint: path.join(serverDir, "bin", "craft-server.mjs"),
     iconFile: path.join(resourcesRoot, "Peng.icns"),
     manifest: path.join(serverDir, "bundle-manifest.json")
@@ -392,6 +396,7 @@ export function bundleManifest(options, layout) {
       binary: options.serverBinary ? path.relative(options.outDir, layout.serverBinary) : null,
       bun: options.bunBinary ? path.relative(options.outDir, layout.bunBinary) : null,
       node: options.nodeBinary ? path.relative(options.outDir, layout.nodeBinary) : null,
+      nodeLibraries: options.nodeBinary ? path.relative(options.outDir, layout.nodeLibrariesDir) : null,
       entrypoint: path.relative(options.outDir, layout.serverEntrypoint),
       webui: path.relative(options.outDir, layout.webuiDir),
       runtimeWebui: path.relative(options.outDir, layout.runtimeWebuiDir),
@@ -419,6 +424,97 @@ Environment:
 
   PENG_*             Peng packaging environment variables.
 `;
+}
+
+async function embedNodeRuntime(sourceNode, layout) {
+  await mkdir(layout.nodeLibrariesDir, { recursive: true });
+  const queue = [sourceNode];
+  const seen = new Set();
+  const dependencies = [];
+
+  while (queue.length > 0) {
+    const source = queue.shift();
+    const key = await canonicalPath(source);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const libraries = await macosDynamicLibraries(source);
+    for (const reference of libraries) {
+      const resolved = await resolveMacosLibrary(reference, source);
+      if (!resolved || isSystemMacosLibrary(resolved)) continue;
+      const dependency = { source: resolved, reference, owner: source };
+      dependencies.push(dependency);
+      queue.push(resolved);
+    }
+  }
+
+  const copied = new Map();
+  for (const dependency of dependencies) {
+    const name = path.basename(dependency.source);
+    if (name === path.basename(sourceNode) || copied.has(name)) continue;
+    const destination = path.join(layout.nodeLibrariesDir, name);
+    await cp(dependency.source, destination, { dereference: true });
+    await chmod(destination, 0o755);
+    copied.set(name, destination);
+  }
+
+  for (const dependency of dependencies) {
+    const name = path.basename(dependency.source);
+    if (!copied.has(name)) continue;
+    const owner = dependency.owner === sourceNode
+      ? `@loader_path/../lib/${name}`
+      : `@loader_path/${name}`;
+    await runCommand(["install_name_tool", "-change", dependency.reference, owner, dependency.owner === sourceNode ? layout.nodeBinary : path.join(layout.nodeLibrariesDir, path.basename(dependency.owner))]);
+  }
+  for (const destination of copied.values()) {
+    await runCommand(["install_name_tool", "-id", `@rpath/${path.basename(destination)}`, destination]);
+  }
+}
+
+async function macosDynamicLibraries(binaryPath) {
+  const result = await captureCommand(["otool", "-L", binaryPath]);
+  if (result.code !== 0) {
+    const error = new Error(`Unable to inspect macOS runtime dependencies: ${result.stderr || result.stdout || result.code}`);
+    error.code = "runtime_dependency_inspection_failed";
+    throw error;
+  }
+  return result.stdout
+    .split("\n")
+    .slice(1)
+    .map((line) => line.trim().split(" (compatibility")[0])
+    .filter(Boolean);
+}
+
+async function resolveMacosLibrary(reference, owner) {
+  const candidates = [];
+  if (reference.startsWith("@loader_path/")) {
+    candidates.push(path.resolve(path.dirname(owner), reference.slice("@loader_path/".length)));
+  } else if (reference.startsWith("@executable_path/")) {
+    candidates.push(path.resolve(path.dirname(owner), reference.slice("@executable_path/".length)));
+  } else if (reference.startsWith("@rpath/")) {
+    const relative = reference.slice("@rpath/".length);
+    candidates.push(path.resolve(path.dirname(owner), relative));
+    candidates.push(path.resolve(path.dirname(owner), "../lib", relative));
+  } else {
+    candidates.push(reference);
+  }
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return canonicalPath(candidate);
+  }
+  return null;
+}
+
+async function canonicalPath(value) {
+  try {
+    return await realpath(value);
+  } catch {
+    return path.resolve(value);
+  }
+}
+
+function isSystemMacosLibrary(libraryPath) {
+  return libraryPath.startsWith("/usr/lib/") ||
+    libraryPath.startsWith("/System/Library/") ||
+    libraryPath.startsWith("/System/Applications/");
 }
 
 function runCommand(command) {

@@ -58,7 +58,7 @@ test("packages the Peng v0.1.0 macOS app bundle layout", async () => {
   assert.match(await readFile(layout.launcher, "utf8"), /Resources\/server/);
   await access(layout.launcher, constants.X_OK);
   assert.match(await readFile(layout.manifest, "utf8"), /Contents\/MacOS\/Peng/);
-  assert.equal(JSON.parse(await readFile(layout.manifest, "utf8")).server.bun, path.relative(result.options.outDir, layout.bunBinary));
+  assert.equal(JSON.parse(await readFile(layout.manifest, "utf8")).server.node, path.relative(result.options.outDir, layout.nodeBinary));
   assert.equal(JSON.parse((await capture([layout.launcher, "--manifest"])).stdout).name, "craft-server");
 });
 
